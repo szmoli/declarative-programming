@@ -1,0 +1,36 @@
+defmodule Khf1 do
+
+  @moduledoc """
+  Hányféle módon állítható elő a célérték
+  @author "Szmoleniczki Ákos <szmoleniczki.akos@edu.bme.hu>"
+  @date   "2025-09-20"
+  """
+  @type ertek() :: integer() # az összeg előállítására felhasználható érték (0 < ertek)
+  @type darab() :: integer() # az értékből rendelkezésre álló maximális darabszám (0 ≤ darabszám)
+  @type ertekek() :: %{ertek() => darab()}
+  @spec hanyfele(ertekek :: ertekek(), celertek :: integer()) :: ennyifele :: integer()
+  # ennyifele a celertek összes különböző előállításainak száma ertekek felhasználásával
+  def hanyfele(ertekek, celertek), do: hanyfele(ertekek, celertek, Map.keys(ertekek) |> Enum.sort(:desc))
+
+  # 0 csak semmit kiválasztva előállítható
+  defp hanyfele(_ertekek, 0, _lehetseges_ertekek), do: 1
+  # negativ celertek nem előállítható
+  defp hanyfele(_ertekek, celertek, _lehetseges_ertekek) when celertek < 0, do: 0
+  # semmi sem előállítható értékek nélkül
+  defp hanyfele(_ertekek, _celertek, []), do: 0
+  # rekurzió kezdete
+  defp hanyfele(ertekek, celertek, [ertek|tobbi_ertek]) do
+    # hányszor használhatjuk fel tényelgesen az adott értéket
+    db_hasznalhato = with db = Map.get(ertekek, ertek, 0), do: if (db == 0), do: div(celertek, ertek), else: db
+    kombinaciok_szama(ertekek, celertek, ertek, tobbi_ertek, 0, db_hasznalhato)
+  end
+
+  defp kombinaciok_szama(_ertekek, _celertek, _ertek, _tobbi_ertek, db, db_hasznalhato) when db > db_hasznalhato, do: 0
+  defp kombinaciok_szama(ertekek, celertek, ertek, tobbi_ertek, db, db_hasznalhato) do
+    uj_celertek = celertek - db * ertek
+    aktualis = hanyfele(ertekek, uj_celertek, tobbi_ertek)
+    maradek = kombinaciok_szama(ertekek, celertek, ertek, tobbi_ertek, db + 1, db_hasznalhato)
+
+    aktualis + maradek
+  end
+end
