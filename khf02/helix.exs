@@ -2,7 +2,7 @@ defmodule Khf2 do
   @moduledoc """
   Számtekercs kiterítése
   @author "Szmoleniczki Ákos <szmoleniczki.akos@edu.bme.hu>"
-  @date   "2025-10-xx"
+  @date   "2025-10-04"
   """
 
   # Alapadatok
