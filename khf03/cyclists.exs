@@ -26,15 +26,15 @@ defmodule Khf3 do
   # * a constraints korlát-listában felsorolt indexű cellákban a megadott
   #   értékű elemek vannak.
   def cyclists({n, m, len}, constraints) do
-    IO.inspect(constraints)
+    # IO.inspect(constraints)
     # 0-tól kezdődő indexeléssé transzformálva
     constraints = Map.new(constraints, fn {ix, val} -> {ix - 1, val} end)
-    IO.inspect(constraints)
+    # IO.inspect(constraints)
     zeros_available = len - n * m
     # 1..m -> (counter from 0 mod m) + 1
     # available = for num <- 1..m, do: num
-    IO.puts("len:")
-    IO.inspect(len)
+    # IO.puts("len:")
+    # IO.inspect(len)
     # cyclists({m, len}, constraints, start_ix, counter, zeros_count, ls_acc)
     generate_lists({n, m, len}, constraints, zeros_available, 0, 0, [], [])
   end
@@ -64,17 +64,17 @@ defmodule Khf3 do
       list_acc
   end
   defp generate_lists({n, m, len}, constraints, zeros_available, ix, counter, current_list, list_acc) do
-    Process.sleep(2000)
-    IO.puts "ix:"
-    IO.inspect ix
+    # Process.sleep(2000)
+    # IO.puts "ix:"
+    # IO.inspect ix
     num = rem(counter, m) + 1 # repeating counter 1..m
     possibilities = possible_values(ix, num, constraints, zeros_available)
-    IO.puts "zeros available:"
-    IO.inspect zeros_available
-    IO.puts "possibilities:"
-    IO.inspect possibilities
-    IO.puts "current list:"
-    IO.inspect current_list
+    # IO.puts "zeros available:"
+    # IO.inspect zeros_available
+    # IO.puts "possibilities:"
+    # IO.inspect possibilities
+    # IO.puts "current list:"
+    # IO.inspect current_list
     Enum.reduce(possibilities, list_acc, fn val, acc ->
       new_zeros_available = if val == 0, do: zeros_available - 1, else: zeros_available
       new_counter = if val == 0, do: counter, else: counter + 1 # this is needed to keep the sequence correct when we use a zero
