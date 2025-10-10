@@ -25,12 +25,17 @@ defmodule Khf3 do
     generate_lists({n, m, len}, constraints, 0, 0, m, zeros, [], [])
   end
 
+  @spec cycle_num(counter :: integer(), m :: cycle()) :: {cycle :: integer(), num :: value()}
+  # megadja hogy éppen hanyadik ciklusban vagyunk és mi a következő szám a ciklusban
   defp cycle_num(counter, m) do
     cycle = div(counter, m) + 1
     num = rem(counter, m) + 1
     {cycle, num}
   end
 
+  @type constraints :: %{ integer() => integer() }
+  @spec candidates(ix :: integer(), zeros :: integer(), constraints :: constraints(), counter :: integer(), m :: cycle()) :: [integer()]
+  # megadja a lehetséges számokat
   defp candidates(ix, zeros, constraints, counter, m) do
     constraint = Map.get(constraints, ix)
     {_, num} = cycle_num(counter, m)
@@ -45,6 +50,8 @@ defmodule Khf3 do
     cands
   end
 
+  @spec valid_candidate?(cand :: integer(), previous :: integer(), ix :: index(), constraints :: constraints(), zeros :: integer(), m :: cycle()) :: {type :: atom(), valid? :: boolean()}
+  # megadja hogy a lehetséges szám érvényes-e vagy sem
   defp valid_candidate?(cand, previous, ix, constraints, zeros, m) do
     next_in_cycle? = cand - previous == 1 and cand != 0
     new_cycle? = cand - previous == 1 - m and cand != 0
@@ -65,6 +72,8 @@ defmodule Khf3 do
     {type, valid?}
   end
 
+  @spec valid_list?(n :: count(), m :: cycle(), ls :: [integer()]) :: boolean()
+  # megadja hogy a lista érvényes-e
   defp valid_list?(n, m, ls) do
     {zeros, non_zeros} = ls
       |> Enum.split_with(fn val -> val == 0 end)
@@ -81,6 +90,7 @@ defmodule Khf3 do
     cycles_ok? and zeros_ok?
   end
 
+  @spec generate_lists({n :: count(), m :: cycle(), len :: size()}, constraints :: constraints(), ix :: index(), counter :: integer(), previous :: integer(), zeros :: integer(), ls :: [value()], ls_acc :: [[value()]]) :: [[value()]]
   defp generate_lists({n, m, len}, _constraints, ix, _counter, _previous, _zeros, ls, ls_acc)
   when len == ix do
     if valid_list?(n, m, ls) do
