@@ -2,8 +2,8 @@ defmodule Khf3 do
 
   @moduledoc """
   Ciklikus számlisták
-  @author "Egyetemi Hallgató <egy.hallg@edu.bme.hu>"
-  @date   "2025-10-xx"
+  @author "Szmoleniczki Ákos <szmoleniczki.akos@edu.bme.hu>"
+  @date   "2025-10-10"
   """
   @type count() :: integer() # számsorozatok száma, n (1 < n)
   @type cycle() :: integer() # számsorozat hossza, m (1 <= m)
@@ -12,48 +12,60 @@ defmodule Khf3 do
   @type index() :: integer() # listaelem sorszáma, ix (1 <= ix <= len)
   @type index_value() :: {index(), value()} # listaelem indexe és értéke
 
-  # @spec cyclists({n::count(), m::cycle(), len::size()}, constraints::[index_value()]) :: results::[[value()]]
+  @spec cyclists({n::count(), m::cycle(), len::size()}, constraints::[index_value()]) :: results::[[value()]]
   # results az összes olyan len hosszú lista listája, melyekben
   # * az 1-től m-ig tartó számsorozat – ebben a sorrendben, esetleg
   #   közbeszúrt 0-kal – n-szer ismétlődik,
   # * len-n*m számú helyen 0-k vannak,
   # * a constraints korlát-listában felsorolt indexű cellákban a megadott
   #   értékű elemek vannak.
-  # def cyclists({n, m, len}, constraints)
+  def cyclists({n, m, len}, constraints) do
+    constraints = Map.new(constraints, fn {ix, val} -> {ix - 1, val} end)
+    zeros = len - n * m
+    generate_lists({n, m, len}, constraints, 0, 0, m, zeros, [], [])
+  end
 
-  def cycle_num(counter, m) do
+  defp cycle_num(counter, m) do
     cycle = div(counter, m) + 1
     num = rem(counter, m) + 1
     {cycle, num}
   end
 
-  def candidates(ix, zeros, constraints, counter, m) do
+  defp candidates(ix, zeros, constraints, counter, m) do
     constraint = Map.get(constraints, ix)
     {_, num} = cycle_num(counter, m)
-    cond do
+    cands = cond do
       constraint -> [constraint]
       zeros > 0 -> [num, 0]
       true -> [num]
     end
+    # IO.puts "candidates:"
+    # IO.inspect cands
+
+    cands
   end
 
-  def valid_candidate?(cand, previous, ix, constraints, zeros, m) do
+  defp valid_candidate?(cand, previous, ix, constraints, zeros, m) do
     next_in_cycle? = cand - previous == 1 and cand != 0
     new_cycle? = cand - previous == 1 - m and cand != 0
     zero? = cand == 0
     zeros? = zeros > 0
     constraint? = Map.has_key?(constraints, ix)
 
-    cond do
-      constraint? && zero? -> zeros?
-      constraint? -> cand == Map.get(constraints, ix)
-      (next_in_cycle? or new_cycle?) and not zero? -> true
-      zero? -> zeros?
-      true -> false
+    {type, valid?} = cond do
+      constraint? && zero? -> {:zero, zeros?}
+      constraint? -> {:constraint, cand == Map.get(constraints, ix) and (next_in_cycle? or new_cycle?)}
+      (next_in_cycle? or new_cycle?) and not zero? -> {:number, true}
+      zero? -> {:zero, zeros?}
+      true -> {:number, false}
     end
+    # IO.puts "candidate:"
+    # IO.inspect {cand, type, valid?}
+
+    {type, valid?}
   end
 
-  def valid_list?(n, m, ls) do
+  defp valid_list?(n, m, ls) do
     {zeros, non_zeros} = ls
       |> Enum.split_with(fn val -> val == 0 end)
     # IO.inspect {non_zeros, zeros}
@@ -67,5 +79,36 @@ defmodule Khf3 do
     # IO.inspect zeros_ok?
 
     cycles_ok? and zeros_ok?
+  end
+
+  defp generate_lists({n, m, len}, _constraints, ix, _counter, _previous, _zeros, ls, ls_acc)
+  when len == ix do
+    if valid_list?(n, m, ls) do
+      # IO.puts "valid list"
+      # IO.inspect ls
+      [Enum.reverse(ls)|ls_acc]
+    else
+      # IO.puts "invalid list"
+      # IO.inspect ls
+      ls_acc
+    end
+  end
+  defp generate_lists({n, m, len}, constraints, ix, counter, previous, zeros, ls, ls_acc) do
+    # IO.puts ""
+    # IO.puts "ls:"
+    # IO.inspect ls
+    candidates(ix, zeros, constraints, counter, m)
+      |> Enum.reduce(ls_acc, fn candidate, acc ->
+        {type, valid?} = valid_candidate?(candidate, previous, ix, constraints, zeros, m)
+        if valid? do
+          new_zeros = if type == :zero, do: zeros - 1, else: zeros
+          new_counter = if type != :zero, do: counter + 1, else: counter
+          new_previous = if type != :zero, do: candidate, else: previous
+          new_ls = [candidate|ls]
+          generate_lists({n, m, len}, constraints, ix + 1, new_counter, new_previous, new_zeros, new_ls, acc)
+        else
+          acc
+        end
+    end)
   end
 end
