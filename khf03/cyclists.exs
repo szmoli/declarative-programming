@@ -52,4 +52,20 @@ defmodule Khf3 do
       true -> false
     end
   end
+
+  def valid_list?(n, m, ls) do
+    {zeros, non_zeros} = ls
+      |> Enum.split_with(fn val -> val == 0 end)
+    # IO.inspect {non_zeros, zeros}
+
+    cycles_ok? = non_zeros
+      |> Enum.frequencies()
+      |> Enum.all?(fn {_val, count} -> count == n end)
+    zeros_ok? = length(zeros) == length(ls) - n * m
+    # IO.inspect {length(zeros), length(ls) - n * m}
+    # IO.inspect cycles_ok?
+    # IO.inspect zeros_ok?
+
+    cycles_ok? and zeros_ok?
+  end
 end
