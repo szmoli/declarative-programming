@@ -8,7 +8,7 @@ The program is given a `n * n` table described by the number `n`. A cycle of num
 
 ### Parameters
 
-- `0 < n`  
+- `0 < n`
 - `0 < m <= n`
 - `0 < v <= m`
 - `0 <= rv <= m`
