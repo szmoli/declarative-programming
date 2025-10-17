@@ -86,8 +86,7 @@ defmodule Khf2 do
   end
   # nagyobb
   defp helix(top, bottom, left, right, field_values, acc) do
-    IO.inspect({top, bottom, left, right, acc})
-    Process.sleep(2000)
+    # IO.inspect({top, bottom, left, right, acc})
 
     acc =
       # if left != right do
