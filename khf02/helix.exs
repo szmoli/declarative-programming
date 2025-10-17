@@ -63,8 +63,31 @@ defmodule Khf2 do
 
   @spec helix(top :: integer(), bottom :: integer(), left :: integer(), right :: integer(), field_values :: %{field_value() => integer()}, acc :: [field_opt_value()]) :: [field_opt_value()]
   # Iteratívan bejárjuk a mátrixot a külső rétegtől befelé
-  defp helix(top, bottom, left, right, field_values, acc) when top <= bottom and left <= right do
-    # IO.inspect({top, bottom, left, right, acc})
+  # 1x1
+  defp helix(top, bottom, left, right, field_values, acc) when bottom - top == 0 and right - left == 0 do
+    field = {top, left}
+    [{field, Map.get(field_values, field)} | acc] |> Enum.reverse()
+  end
+  # 2x2
+  defp helix(top, bottom, left, right, field_values, acc) when bottom - top == 1 and right - left == 1 do
+    field1 = {top, left}
+    field2 = {top, right}
+    field3 = {bottom, right}
+    field4 = {bottom, left}
+    val1 = Map.get(field_values, field1)
+    val2 = Map.get(field_values, field2)
+    val3 = Map.get(field_values, field3)
+    val4 = Map.get(field_values, field4)
+    res1 = {field1, val1}
+    res2 = {field2, val2}
+    res3 = {field3, val3}
+    res4 = {field4, val4}
+    [res4|[res3|[res2|[res1|acc]]]] |> Enum.reverse()
+  end
+  # nagyobb
+  defp helix(top, bottom, left, right, field_values, acc) do
+    IO.inspect({top, bottom, left, right, acc})
+    Process.sleep(2000)
 
     acc =
       # if left != right do
@@ -123,7 +146,7 @@ defmodule Khf2 do
     helix(top + 1, bottom - 1, left + 1, right - 1, field_values, acc)
   end
 
-  @spec helix(_top :: integer(), _bottom :: integer(), _left :: integer(), _right :: integer(), _field_values :: %{field_value() => integer()}, acc :: [field_opt_value()]) :: [field_opt_value()]
+  # @spec helix(_top :: integer(), _bottom :: integer(), _left :: integer(), _right :: integer(), _field_values :: %{field_value() => integer()}, acc :: [field_opt_value()]) :: [field_opt_value()]
   # Az eredmény listát visszafordítjuk és az ismétlődő elemeket kiszűrjük
-  defp helix(_top, _bottom, _left, _right, _field_values, acc), do: acc |> Enum.reverse() |> Enum.uniq()
+  # defp helix(_top, _bottom, _left, _right, _field_values, acc), do: acc |> Enum.reverse() |> Enum.uniq()
 end
