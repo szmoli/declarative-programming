@@ -22,7 +22,6 @@ defmodule Khf3 do
   def cyclists({n, m, len}, constraints) do
     constraints = Map.new(constraints, fn {ix, val} -> {ix - 1, val} end)
     zeros = len - n * m
-    hash = log_hash(n, m, len, constraints)
     generate_lists({n, m, len}, constraints, 0, 0, m, zeros, [], [])
   end
 
@@ -61,7 +60,7 @@ defmodule Khf3 do
   end
 
   @spec generate_lists({n :: count(), m :: cycle(), len :: size()}, constraints :: constraints(), ix :: index(), counter :: integer(), previous :: integer(), zeros :: integer(), ls :: [value()], ls_acc :: [[value()]]) :: [[value()]]
-  defp generate_lists({n, m, len}, constraints, ix, _counter, _previous, _zeros, ls, ls_acc)
+  defp generate_lists({_n, _m, len}, _constraints, ix, _counter, _previous, _zeros, ls, ls_acc)
   when len == ix do
     [Enum.reverse(ls)|ls_acc]
   end
