@@ -36,16 +36,12 @@ defmodule Khf2 do
   # Csak N és M adott
   def helix([size_str | [_cycle_str]]) do
     size = size_str |> String.trim() |> String.to_integer()
-    # cycle = cycle_str |> String.trim() |> String.to_integer()
     helix(1, size, 1, size, %{}, [])
   end
 
   # N és M mellett valahány mező értéke is adott
   def helix([size_str | [_cycle_str | field_value_strs]]) do
     size = size_str |> String.trim() |> String.to_integer()
-    # cycle = cycle_str |> String.trim() |> String.to_integer()
-    # IO.inspect({size, cycle})
-
     # Bemenet: ["  x1  y1 v1 ", " x2     y2 v2", ...]
     # Kell: %{{x, y} => v}
     # Map-hez kell: [{{x, y}, v}, ...]
@@ -57,7 +53,6 @@ defmodule Khf2 do
       end)
       |> Map.new()
 
-    # IO.inspect(field_values)
     helix(1, size, 1, size, field_values, [])
   end
 
@@ -86,66 +81,30 @@ defmodule Khf2 do
   end
   # nagyobb
   defp helix(top, bottom, left, right, field_values, acc) do
-    # IO.inspect({top, bottom, left, right, acc})
+    acc =
+      left..right
+      |> Enum.reduce(acc, fn col, acc ->
+        [{{top, col}, Map.get(field_values, {top, col})} | acc]
+      end)
 
     acc =
-      # if left != right do
-        left..right
-        |> Enum.reduce(acc, fn col, acc ->
-          [{{top, col}, Map.get(field_values, {top, col})} | acc]
-        end)
-      # else
-      #   acc
-      # end
-
-    # IO.puts("left -> right:")
-    # IO.inspect(acc)
+      (top + 1)..bottom
+      |> Enum.reduce(acc, fn row, acc ->
+        [{{row, right}, Map.get(field_values, {row, right})} | acc]
+      end)
 
     acc =
-      # if top != bottom do
-        (top + 1)..bottom
-        |> Enum.reduce(acc, fn row, acc ->
-          [{{row, right}, Map.get(field_values, {row, right})} | acc]
-        end)
-      # else
-      #   acc
-      # end
-
-    # IO.puts("top -> bottom:")
-    # IO.inspect(acc)
+      (right - 1)..left
+      |> Enum.reduce(acc, fn col, acc ->
+        [{{bottom, col}, Map.get(field_values, {bottom, col})} | acc]
+      end)
 
     acc =
-      # if right != left do
-        (right - 1)..left
-        |> Enum.reduce(acc, fn col, acc ->
-          # IO.inspect({{bottom, col}, Map.get(field_values, {bottom, col})})
-          [{{bottom, col}, Map.get(field_values, {bottom, col})} | acc]
-        end)
-      # else
-      #   acc
-      # end
-
-    # IO.puts("left <- right:")
-    # IO.inspect(acc)
-
-    acc =
-      # if bottom != top do
-        (bottom - 1)..(top + 1)
-        |> Enum.reduce(acc, fn row, acc ->
-          # IO.inspect({{row, left}, Map.get(field_values, {row, left})})
-          [{{row, left}, Map.get(field_values, {row, left})} | acc]
-        end)
-      # else
-      #   acc
-      # end
-
-    # IO.puts("top <- bottom:")
-    # IO.inspect(acc)
+      (bottom - 1)..(top + 1)
+      |> Enum.reduce(acc, fn row, acc ->
+        [{{row, left}, Map.get(field_values, {row, left})} | acc]
+      end)
 
     helix(top + 1, bottom - 1, left + 1, right - 1, field_values, acc)
   end
-
-  # @spec helix(_top :: integer(), _bottom :: integer(), _left :: integer(), _right :: integer(), _field_values :: %{field_value() => integer()}, acc :: [field_opt_value()]) :: [field_opt_value()]
-  # Az eredmény listát visszafordítjuk és az ismétlődő elemeket kiszűrjük
-  # defp helix(_top, _bottom, _left, _right, _field_values, acc), do: acc |> Enum.reverse() |> Enum.uniq()
 end
