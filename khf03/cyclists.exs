@@ -12,6 +12,10 @@ defmodule Khf3 do
   @type index() :: integer() # listaelem sorszáma, ix (1 <= ix <= len)
   @type index_value() :: {index(), value()} # listaelem indexe és értéke
 
+  defp log_hash(n, m, len, constraints) do
+    :crypto.hash(:sha256, inspect({n, m, len, constraints})) |> Base.encode16()
+  end
+
   @spec cyclists({n::count(), m::cycle(), len::size()}, constraints::[index_value()]) :: results::[[value()]]
   # results az összes olyan len hosszú lista listája, melyekben
   # * az 1-től m-ig tartó számsorozat – ebben a sorrendben, esetleg
@@ -22,6 +26,9 @@ defmodule Khf3 do
   def cyclists({n, m, len}, constraints) do
     constraints = Map.new(constraints, fn {ix, val} -> {ix - 1, val} end)
     zeros = len - n * m
+    hash = log_hash(n, m, len, constraints)
+    File.rm("logs/invalid_lists_#{hash}.txt")
+    File.rm("logs/valid_lists_#{hash}.txt")
     generate_lists({n, m, len}, constraints, 0, 0, m, zeros, [], [])
   end
 
@@ -91,13 +98,16 @@ defmodule Khf3 do
   end
 
   @spec generate_lists({n :: count(), m :: cycle(), len :: size()}, constraints :: constraints(), ix :: index(), counter :: integer(), previous :: integer(), zeros :: integer(), ls :: [value()], ls_acc :: [[value()]]) :: [[value()]]
-  defp generate_lists({n, m, len}, _constraints, ix, _counter, _previous, _zeros, ls, ls_acc)
+  defp generate_lists({n, m, len}, constraints, ix, _counter, _previous, _zeros, ls, ls_acc)
   when len == ix do
+    hash = log_hash(n, m, len, constraints)
     if valid_list?(n, m, ls) do
       # IO.puts "valid list"
       # IO.inspect ls
+      File.write("logs/valid_lists_#{hash}.txt", "#{inspect(Enum.reverse(ls))}\n", [:append])
       [Enum.reverse(ls)|ls_acc]
     else
+      File.write("logs/invalid_lists_#{hash}.txt", "#{inspect(Enum.reverse(ls))}\n", [:append])
       # IO.puts "invalid list"
       # IO.inspect ls
       ls_acc
