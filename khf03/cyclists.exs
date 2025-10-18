@@ -29,6 +29,8 @@ defmodule Khf3 do
     hash = log_hash(n, m, len, constraints)
     File.rm("logs/invalid_lists_#{hash}.txt")
     File.rm("logs/valid_lists_#{hash}.txt")
+    # IO.inspect {n, m, len, constraints}, label: "start params"
+    File.write("logs/valid_lists_#{hash}.txt", "#{inspect({n, m, len, constraints})}\n\n", [:append])
     generate_lists({n, m, len}, constraints, 0, 0, m, zeros, [], [])
   end
 
@@ -41,18 +43,28 @@ defmodule Khf3 do
   end
 
   @type constraints :: %{ integer() => integer() }
-  @spec candidates(ix :: integer(), zeros :: integer(), constraints :: constraints(), counter :: integer(), m :: cycle()) :: [integer()]
+  @spec candidates(ix :: integer(), zeros :: integer(), constraints :: constraints(), counter :: integer(), m :: cycle(), n :: size(), previous :: integer()) :: [integer()]
   # megadja a lehetséges számokat
-  defp candidates(ix, zeros, constraints, counter, m) do
-    constraint = Map.get(constraints, ix)
-    {_, num} = cycle_num(counter, m)
+  defp candidates(ix, zeros, constraints, counter, m, n, previous) do
+    {cycle, num} = cycle_num(counter, m)
+    candidate = Map.get(constraints, ix, num)
+    constraint? = Map.has_key?(constraints, ix)
+    zeros? = zeros > 0
+    zero? = candidate == 0 and zeros?
+    next_in_cycle? = candidate - previous == 1 and candidate != 0
+    new_cycle? = candidate - previous == 1 - m and candidate != 0
+    valid_cycle? = cycle <= n and (next_in_cycle? or new_cycle?)
     cands = cond do
-      constraint -> [constraint]
-      zeros > 0 -> [num, 0]
-      true -> [num]
+      constraint? and zero? -> [0]
+      constraint? and valid_cycle? -> [Map.get(constraints, ix)]
+      constraint? and not valid_cycle? -> []
+      zeros? and valid_cycle? -> [0, candidate]
+      zeros? -> [0]
+      valid_cycle? -> [candidate]
+      true -> []
     end
     # IO.puts "candidates:"
-    # IO.inspect cands
+    # IO.inspect cands, label: "candidates"
 
     cands
   end
@@ -67,7 +79,7 @@ defmodule Khf3 do
     constraint? = Map.has_key?(constraints, ix)
 
     {type, valid?} = cond do
-      constraint? && zero? -> {:zero, zeros?}
+      constraint? and zero? -> {:zero, zeros?}
       constraint? -> {:constraint, cand == Map.get(constraints, ix) and (next_in_cycle? or new_cycle?)}
       (next_in_cycle? or new_cycle?) and not zero? -> {:number, true}
       zero? -> {:zero, zeros?}
@@ -103,10 +115,11 @@ defmodule Khf3 do
     hash = log_hash(n, m, len, constraints)
     if valid_list?(n, m, ls) do
       # IO.puts "valid list"
-      # IO.inspect ls
+      # IO.inspect ls, label: "valid list"
       File.write("logs/valid_lists_#{hash}.txt", "#{inspect(Enum.reverse(ls))}\n", [:append])
       [Enum.reverse(ls)|ls_acc]
     else
+      # IO.inspect ls, label: "invalid list"
       File.write("logs/invalid_lists_#{hash}.txt", "#{inspect(Enum.reverse(ls))}\n", [:append])
       # IO.puts "invalid list"
       # IO.inspect ls
@@ -116,8 +129,9 @@ defmodule Khf3 do
   defp generate_lists({n, m, len}, constraints, ix, counter, previous, zeros, ls, ls_acc) do
     # IO.puts ""
     # IO.puts "ls:"
-    # IO.inspect ls
-    candidates(ix, zeros, constraints, counter, m)
+    # IO.inspect ls, label: "list"
+    # Process.sleep(2000)
+    candidates(ix, zeros, constraints, counter, m, n, previous)
       |> Enum.reduce(ls_acc, fn candidate, acc ->
         {type, valid?} = valid_candidate?(candidate, previous, ix, constraints, zeros, m)
         if valid? do
