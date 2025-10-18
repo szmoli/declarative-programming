@@ -36,3 +36,16 @@ All rows and columns of every solution table must contain the `rv` values `0 .. 
 ### Solution table
 
 The program returns a list of each possible solution table for the given problem. The solution tables are lists of its rows. The rows are lists of `rv` values.
+
+## Computing the solutions
+
+The general idea behind the algorithm is to use the knowledge gained from implementing the previous homeworks' algorithms.
+
+### Cyclists (homework 3)
+
+We can use the cyclists algorithm implemented in homework 3 to generate all possible solutions of a single row or column in a given table by passing it the current solution's constraints which are updated as the traversal unfolds, the size of the tabel's current layer and the cycle.
+
+### Helix flatten (homework 2)
+
+The basic idea behind the helix flattening algorithm can be used to call the cyclists algorithm in the correct order for the rows and columns of the table.
+
