@@ -113,18 +113,18 @@ defmodule Khf3 do
   defp generate_lists({n, m, len}, constraints, ix, _counter, _previous, _zeros, ls, ls_acc)
   when len == ix do
     hash = log_hash(n, m, len, constraints)
-    if valid_list?(n, m, ls) do
+    # if valid_list?(n, m, ls) do
       # IO.puts "valid list"
       # IO.inspect ls, label: "valid list"
       File.write("logs/valid_lists_#{hash}.txt", "#{inspect(Enum.reverse(ls))}\n", [:append])
       [Enum.reverse(ls)|ls_acc]
-    else
+    # else
       # IO.inspect ls, label: "invalid list"
-      File.write("logs/invalid_lists_#{hash}.txt", "#{inspect(Enum.reverse(ls))}\n", [:append])
+    #  File.write("logs/invalid_lists_#{hash}.txt", "#{inspect(Enum.reverse(ls))}\n", [:append])
       # IO.puts "invalid list"
       # IO.inspect ls
-      ls_acc
-    end
+    #  ls_acc
+    #end
   end
   defp generate_lists({n, m, len}, constraints, ix, counter, previous, zeros, ls, ls_acc) do
     # IO.puts ""
@@ -133,16 +133,29 @@ defmodule Khf3 do
     # Process.sleep(2000)
     candidates(ix, zeros, constraints, counter, m, n, previous)
       |> Enum.reduce(ls_acc, fn candidate, acc ->
-        {type, valid?} = valid_candidate?(candidate, previous, ix, constraints, zeros, m)
-        if valid? do
-          new_zeros = if type == :zero, do: zeros - 1, else: zeros
-          new_counter = if type != :zero, do: counter + 1, else: counter
-          new_previous = if type != :zero, do: candidate, else: previous
+        # {type, valid?} = valid_candidate?(candidate, previous, ix, constraints, zeros, m)
+        # if valid? do
+          new_zeros = if candidate == 0, do: zeros - 1, else: zeros
+          new_counter = if candidate != 0, do: counter + 1, else: counter
+          new_previous = if candidate != 0, do: candidate, else: previous
           new_ls = [candidate|ls]
           generate_lists({n, m, len}, constraints, ix + 1, new_counter, new_previous, new_zeros, new_ls, acc)
-        else
-          acc
-        end
+        # else
+        #  acc
+        #end
     end)
+    # candidates(ix, zeros, constraints, counter, m, n, previous)
+    #   |> Enum.reduce(ls_acc, fn candidate, acc ->
+    #     {type, valid?} = valid_candidate?(candidate, previous, ix, constraints, zeros, m)
+    #     if valid? do
+    #       new_zeros = if type == :zero, do: zeros - 1, else: zeros
+    #       new_counter = if type != :zero, do: counter + 1, else: counter
+    #       new_previous = if type != :zero, do: candidate, else: previous
+    #       new_ls = [candidate|ls]
+    #       generate_lists({n, m, len}, constraints, ix + 1, new_counter, new_previous, new_zeros, new_ls, acc)
+    #     else
+    #       acc
+    #     end
+    # end)
   end
 end
