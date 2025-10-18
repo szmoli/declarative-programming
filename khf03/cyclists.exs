@@ -20,9 +20,9 @@ defmodule Khf3 do
   # * a constraints korlát-listában felsorolt indexű cellákban a megadott
   #   értékű elemek vannak.
   def cyclists({n, m, len}, constraints) do
-    constraints = Map.new(constraints, fn {ix, val} -> {ix - 1, val} end)
+    constraints = Map.new(constraints)
     zeros = len - n * m
-    generate_lists({n, m, len}, constraints, 0, 0, m, zeros, [], [])
+    generate_lists({n, m, len}, constraints, 1, 0, m, zeros, [], [])
   end
 
   @spec cycle_num(counter :: integer(), m :: cycle()) :: {cycle :: integer(), num :: value()}
@@ -61,7 +61,7 @@ defmodule Khf3 do
 
   @spec generate_lists({n :: count(), m :: cycle(), len :: size()}, constraints :: constraints(), ix :: index(), counter :: integer(), previous :: integer(), zeros :: integer(), ls :: [value()], ls_acc :: [[value()]]) :: [[value()]]
   defp generate_lists({_n, _m, len}, _constraints, ix, _counter, _previous, _zeros, ls, ls_acc)
-  when len == ix do
+  when len == ix - 1 do
     [Enum.reverse(ls)|ls_acc]
   end
   defp generate_lists({n, m, len}, constraints, ix, counter, previous, zeros, ls, ls_acc) do
