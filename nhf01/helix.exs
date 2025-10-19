@@ -37,14 +37,22 @@ defmodule Nhf1 do
   def helix(sd) do
     {n, m, constraints} = sd
     constraints_map = Map.new(constraints) # field => value
-    solution_map = Map.new(constraints)
-    list_zeros = n - m
+    _solution_map = Map.new(constraints)
+    _list_zeros = n - m
+    reset_log(n, m, constraints)
     helix_solutions(n, m, 1, n, 1, n, constraints_map, constraints_map)
   end
 
+  def log_file(n, m, _constraints) do
+    hash = :crypto.hash(:sha, inspect({n, m})) |> Base.encode16
+    "logs/helix_#{hash}.txt"
+  end
+  def reset_log(n, m, constraints), do: log_file(n, m, constraints) |> File.rm
+  def write_log(str, n, m, constraints), do: log_file(n, m, constraints) |> File.write("#{str}\n", [:append])
+
   @type zeros() :: integer() # 0 <= zeros, number of available zeros
   @type constraints() :: %{field() => value()}
-  @spec helix_solution(
+  @spec helix_solutions(
     n :: size(), m :: cycle(),
     top :: row(), bottom :: row(),
     left :: col(), right :: col(),
@@ -54,85 +62,100 @@ defmodule Nhf1 do
     solution :: solution() # current solution
   ) :: [solution()]
   # 1 x 1
-  defp helix_solution(n, m, top, bottom, left, right, constraints, solution) when bottom - top == 0 and left - right == 0 do
+  defp helix_solutions(n, m, top, bottom, left, right, constraints, _solution) when bottom - top == 0 and right - left == 0 do
+    IO.puts "1x1\n" |> write_log(n, m ,constraints)
     nil
   end
   # 2 x 2
-  defp helix_solutions(n, m, top, bottom, left, right, constraints, solution) when bottom - top == 1 and left - right == 1 do
+  defp helix_solutions(n, m, top, bottom, left, right, constraints, _solution) when bottom - top == 1 and right - left == 1 do
+    IO.puts "2x2\n" |> write_log(n, m, constraints)
     nil
   end
   # nagyobb tábla
   defp helix_solutions(n, m, top, bottom, left, right, constraints, solution) do
-    {rows, cols} = table(n, top, bottom, left, right, constraints)
+    {_rows, _cols} = table(n, top, bottom, left, right, constraints)
 
     IO.inspect solution, label: "start"
+    "start" |> write_log(n, m, constraints)
+    "top, bottom, left, right: #{inspect({top, bottom, left, right})}" |> write_log(n,m,constraints)
+    inspect(solution) |> write_log(n, m, constraints)
 
     # Top row
     cyclists(m, n, row_constraints(top, solution))
       |> Enum.reduce(solution, fn values, acc ->
-        IO.inspect values, label: "values"
+        # IO.inspect values, label: "values"
+        inspect(values) |> write_log(n, m ,constraints)
 
         solution = values
           |> Enum.with_index
           |> Map.new(fn {value, index} -> {{top, index + 1}, value} end)
-          |> Map.merge(solution)
+          |> Map.merge(acc)
 
         IO.inspect solution, label: "after top row"
+        "after top row" |> write_log(n, m, constraints)
+        inspect(solution) |> write_log(n, m, constraints)
 
         # Right col
         cyclists(m, n, col_constraints(right, solution))
           |> Enum.reduce(solution, fn values, acc ->
-            IO.inspect values, label: "values"
+            # IO.inspect values, label: "values"
+            inspect(values) |> write_log(n, m ,constraints)
 
             solution = values
               |> Enum.with_index
               |> Map.new(fn {value, index} -> {{index + 1, right}, value} end)
-              |> Map.merge(solution)
+              |> Map.merge(acc)
 
             IO.inspect solution, label: "after right col"
+            "after right col" |> write_log(n, m, constraints)
+            inspect(solution) |> write_log(n, m, constraints)
 
             # Bottom row
             cyclists(m, n, row_constraints(bottom, solution))
               |> Enum.reduce(solution, fn values, acc ->
-
-                IO.inspect values, label: "values"
+                inspect(values) |> write_log(n, m ,constraints)
 
                 solution = values
                   |> Enum.with_index
                   |> Map.new(fn {value, index} -> {{bottom, index + 1}, value} end)
-                  |> Map.merge(solution)
+                  |> Map.merge(acc)
 
                 IO.inspect solution, label: "after bottom row"
+                "after bottom row" |> write_log(n, m, constraints)
+                inspect(solution) |> write_log(n, m, constraints)
+
 
                 # Left col
                 cyclists(m, n, col_constraints(left, solution))
                   |> Enum.reduce(solution, fn values, acc ->
-
-                    IO.inspect values, label: "values"
+                    # IO.inspect values, label: "values"
+                    inspect(values) |> write_log(n, m ,constraints)
 
                     solution = values
                       |> Enum.with_index
                       |> Map.new(fn {value, index} -> {{index + 1, left}, value} end)
-                      |> Map.merge(solution)
+                      |> Map.merge(acc)
 
                     IO.inspect solution, label: "final solution, after left col"
+                    "final, after left col" |> write_log(n, m, constraints)
+                    inspect(solution) |> write_log(n, m, constraints)
+                    "layer done" |> write_log(n, m, constraints)
+
+                    helix_solutions(n, m, top + 1, bottom - 1, left + 1, right - 1, solution, solution)
                   end)
               end)
           end)
       end)
-
-    # Right col
-
   end
 
   def row_constraints(row_ix, constraints) do
-    rc = constraints |> Enum.filter(fn {{row, _col}, val} -> row == row_ix end) |> Map.new(fn {{_, col}, val} -> {col, val} end)
+    rc = constraints |> Enum.filter(fn {{row, _col}, _val} -> row == row_ix end) |> Map.new(fn {{_, col}, val} -> {col, val} end)
     IO.inspect {row_ix, rc}, label: "row constraints"
     rc
   end
 
   def col_constraints(col_ix, constraints) do
-    cc = constraints |> Enum.filter(fn {{_row, col}, val} -> col == col_ix end)|> Map.new(fn {{row, _}, val} -> {row, val} end)
+    cc = constraints |> Enum.filter(fn {{_row, col}, _val} -> col == col_ix end)|> Map.new(fn {{row, _}, val} -> {row, val} end)
     IO.inspect {col_ix, cc}, label: "col constraints"
     cc
   end
@@ -178,7 +201,7 @@ defmodule Nhf1 do
     zeros = len - m
     # IO.inspect constraints, label: "constraints"
     IO.inspect {m, len, constraints}, label: "start params"
-    generate_lists(m, len, constraints, 1, m, zeros, [], [])
+    generate_lists(m, len, constraints, 1, m, zeros, [], [], false)
   end
 
   @spec cycle_num(number :: integer(), m :: cycle()) :: value()
@@ -199,7 +222,7 @@ defmodule Nhf1 do
     new_cycle? = candidate - previous == 1 - m and candidate != 0
     valid_cycle? = (next_in_cycle? or new_cycle? or ix == 1)
 
-    IO.inspect {candidate, previous, next}, label: "candidate, previous, next"
+    # IO.inspect {candidate, previous, next}, label: "candidate, previous, next"
 
     cands = cond do
       constraint? and zero? -> [0]
@@ -211,25 +234,25 @@ defmodule Nhf1 do
       true -> []
     end
 
-    IO.inspect cands, label: "candidates"
+    # IO.inspect cands, label: "candidates"
 
     cands
   end
 
-  @spec generate_lists(m :: cycle(), len :: size(), constraints :: constraints(), ix :: index(), previous :: integer(), zeros :: integer(), ls :: [value()], ls_acc :: [[value()]]) :: [[value()]]
-  defp generate_lists(_m, len, _constraints, ix, _previous, zeros, ls, ls_acc)
+  @spec generate_lists(m :: cycle(), len :: size(), constraints :: constraints(), ix :: index(), previous :: integer(), zeros :: integer(), ls :: [value()], ls_acc :: [[value()]], first_any? :: boolean()) :: [[value()]]
+  defp generate_lists(_m, len, _constraints, ix, _previous, zeros, ls, ls_acc, _first_any?)
   when len == ix - 1 and zeros == 0 do
-    IO.inspect Enum.reverse(ls), label: "added ls"
+    # IO.inspect Enum.reverse(ls), label: "added ls"
     [Enum.reverse(ls)|ls_acc]
   end
-  defp generate_lists(_m, len, _constraints, ix, _previous, zeros, ls, ls_acc)
+  defp generate_lists(_m, len, _constraints, ix, _previous, zeros, _ls, ls_acc, _first_any?)
   when len == ix - 1 and zeros > 0 do
-    IO.inspect Enum.reverse(ls), label: "not added ls"
+    # IO.inspect Enum.reverse(ls), label: "not added ls"
     ls_acc
   end
   # defp generate_lists(_m, len, _constraints, ix, _previous, _zeros, ls, ls_acc), do: ls_acc
-  defp generate_lists(m, len, constraints, ix, previous, zeros, ls, ls_acc) do
-    IO.inspect Enum.reverse(ls), label: "ls"
+  defp generate_lists(m, len, constraints, ix, previous, zeros, ls, ls_acc, true) do
+    # IO.inspect Enum.reverse(ls), label: "ls"
 
     # start = previous + 1
     # start..m
@@ -243,7 +266,23 @@ defmodule Nhf1 do
       new_zeros = if candidate == 0, do: zeros - 1, else: zeros
       new_previous = if candidate != 0, do: candidate, else: previous
       new_ls = [candidate|ls]
-      generate_lists(m, len, constraints, ix + 1, new_previous, new_zeros, new_ls, acc)
+      generate_lists(m, len, constraints, ix + 1, new_previous, new_zeros, new_ls, acc, true)
+    end)
+  end
+
+  defp generate_lists(m, len, constraints, ix, previous, zeros, ls, ls_acc, false) do
+    # IO.inspect Enum.reverse(ls), label: "ls"
+
+    # start = previous + 1
+    # start..m
+    # |> Enum.to_list
+    # |> Enum.reduce(ls_acc, fn next, acc ->
+    candidates(ix, zeros, constraints, m, previous, previous + 1)
+    |> Enum.reduce(ls_acc, fn candidate, acc ->
+      new_zeros = if candidate == 0, do: zeros - 1, else: zeros
+      new_previous = if candidate != 0, do: candidate, else: previous
+      new_ls = [candidate|ls]
+      generate_lists(m, len, constraints, ix + 1, new_previous, new_zeros, new_ls, acc, true)
     end)
   end
 end
