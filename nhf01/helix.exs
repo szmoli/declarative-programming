@@ -190,7 +190,8 @@ defmodule Nhf1 do
   @spec candidates(ix :: integer(), zeros :: integer(), constraints :: constraints(), m :: cycle(), previous :: integer(), next :: integer()) :: [integer()]
   # megadja a lehetséges számokat
   defp candidates(ix, zeros, constraints, m, previous, next) do
-    candidate = Map.get(constraints, ix, cycle_num(next, m))
+    next = cycle_num(next, m)
+    candidate = Map.get(constraints, ix, next)
     constraint? = Map.has_key?(constraints, ix)
     zeros? = zeros > 0
     zero? = candidate == 0 and zeros?
@@ -228,14 +229,21 @@ defmodule Nhf1 do
   end
   # defp generate_lists(_m, len, _constraints, ix, _previous, _zeros, ls, ls_acc), do: ls_acc
   defp generate_lists(m, len, constraints, ix, previous, zeros, ls, ls_acc) do
-    # IO.inspect Enum.reverse(ls), label: "ls"
+    IO.inspect Enum.reverse(ls), label: "ls"
 
-    candidates(ix, zeros, constraints, m, previous, previous + 1)
-      |> Enum.reduce(ls_acc, fn candidate, acc ->
-        new_zeros = if candidate == 0, do: zeros - 1, else: zeros
-        new_previous = if candidate != 0, do: candidate, else: previous
-        new_ls = [candidate|ls]
-        generate_lists(m, len, constraints, ix + 1, new_previous, new_zeros, new_ls, acc)
+    # start = previous + 1
+    # start..m
+    # |> Enum.to_list
+    # |> Enum.reduce(ls_acc, fn next, acc ->
+    start = if zeros > 0, do: 0, else: 1
+    numbers = if ix == 1, do: Enum.to_list(start..m), else: candidates(ix, zeros, constraints, m, previous, previous + 1)
+
+    numbers
+    |> Enum.reduce(ls_acc, fn candidate, acc ->
+      new_zeros = if candidate == 0, do: zeros - 1, else: zeros
+      new_previous = if candidate != 0, do: candidate, else: previous
+      new_ls = [candidate|ls]
+      generate_lists(m, len, constraints, ix + 1, new_previous, new_zeros, new_ls, acc)
     end)
   end
 end
