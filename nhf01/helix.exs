@@ -65,26 +65,59 @@ defmodule Nhf1 do
   defp helix_solutions(n, m, top, bottom, left, right, constraints, solution) do
     {rows, cols} = table(n, top, bottom, left, right, constraints)
 
-    # IO.inspect solution, label: "start"
+    IO.inspect solution, label: "start"
 
     # Top row
     cyclists(m, n, row_constraints(top, solution))
       |> Enum.reduce(solution, fn values, acc ->
+        IO.inspect values, label: "values"
+
         solution = values
           |> Enum.with_index
           |> Map.new(fn {value, index} -> {{top, index + 1}, value} end)
           |> Map.merge(solution)
 
-        # IO.inspect solution, label: "after top row"
+        IO.inspect solution, label: "after top row"
 
+        # Right col
         cyclists(m, n, col_constraints(right, solution))
           |> Enum.reduce(solution, fn values, acc ->
+            IO.inspect values, label: "values"
+
             solution = values
               |> Enum.with_index
               |> Map.new(fn {value, index} -> {{index + 1, right}, value} end)
               |> Map.merge(solution)
 
-            # IO.inspect solution, label: "after right col"
+            IO.inspect solution, label: "after right col"
+
+            # Bottom row
+            cyclists(m, n, row_constraints(bottom, solution))
+              |> Enum.reduce(solution, fn values, acc ->
+
+                IO.inspect values, label: "values"
+
+                solution = values
+                  |> Enum.with_index
+                  |> Map.new(fn {value, index} -> {{bottom, index + 1}, value} end)
+                  |> Map.merge(solution)
+
+                IO.inspect solution, label: "after bottom row"
+
+                # Left col
+                cyclists(m, n, col_constraints(left, solution))
+                  |> Enum.reduce(solution, fn values, acc ->
+
+                    IO.inspect values, label: "values"
+
+                    solution = values
+                      |> Enum.with_index
+                      |> Map.new(fn {value, index} -> {{index + 1, left}, value} end)
+                      |> Map.merge(solution)
+
+                    IO.inspect solution, label: "final solution, after left col"
+                  end)
+              end)
           end)
       end)
 
@@ -93,11 +126,15 @@ defmodule Nhf1 do
   end
 
   def row_constraints(row_ix, constraints) do
-    constraints |> Map.new(fn {{row_ix, col}, val} -> {col, val} end)
+    rc = constraints |> Enum.filter(fn {{row, _col}, val} -> row == row_ix end) |> Map.new(fn {{_, col}, val} -> {col, val} end)
+    IO.inspect {row_ix, rc}, label: "row constraints"
+    rc
   end
 
   def col_constraints(col_ix, constraints) do
-    constraints |> Map.new(fn {{row, col_ix}, val} -> {row, val} end)
+    cc = constraints |> Enum.filter(fn {{_row, col}, val} -> col == col_ix end)|> Map.new(fn {{row, _}, val} -> {row, val} end)
+    IO.inspect {col_ix, cc}, label: "col constraints"
+    cc
   end
 
   def table(n, top, bottom, left, right, constraints) do
@@ -130,7 +167,7 @@ defmodule Nhf1 do
   @type index() :: integer() # listaelem sorszáma, ix (1 <= ix <= len)
   @type index_value() :: {index(), value()} # listaelem indexe és értéke
 
-  @spec cyclists(m :: cycle(), len :: size(), constraints::[index_value()]) :: results::[[value()]]
+  @spec cyclists(m :: cycle(), len :: size(), constraints::constraints()) :: results::[[value()]]
   # results az összes olyan len hosszú lista listája, melyekben
   # * az 1-től m-ig tartó számsorozat – ebben a sorrendben, esetleg
   #   közbeszúrt 0-kal – n-szer ismétlődik,
@@ -138,9 +175,9 @@ defmodule Nhf1 do
   # * a constraints korlát-listában felsorolt indexű cellákban a megadott
   #   értékű elemek vannak.
   def cyclists(m, len, constraints) do
-    constraints = Map.new(constraints)
     zeros = len - m
-    # IO.inspect {m, len, constraints}, label: "start params"
+    # IO.inspect constraints, label: "constraints"
+    IO.inspect {m, len, constraints}, label: "start params"
     generate_lists(m, len, constraints, 1, m, zeros, [], [])
   end
 
@@ -161,7 +198,7 @@ defmodule Nhf1 do
     new_cycle? = candidate - previous == 1 - m and candidate != 0
     valid_cycle? = (next_in_cycle? or new_cycle? or ix == 1)
 
-    # IO.inspect {candidate, previous, next}, label: "candidate, previous, next"
+    IO.inspect {candidate, previous, next}, label: "candidate, previous, next"
 
     cands = cond do
       constraint? and zero? -> [0]
@@ -173,7 +210,7 @@ defmodule Nhf1 do
       true -> []
     end
 
-    # IO.inspect cands, label: "candidates"
+    IO.inspect cands, label: "candidates"
 
     cands
   end
@@ -181,12 +218,12 @@ defmodule Nhf1 do
   @spec generate_lists(m :: cycle(), len :: size(), constraints :: constraints(), ix :: index(), previous :: integer(), zeros :: integer(), ls :: [value()], ls_acc :: [[value()]]) :: [[value()]]
   defp generate_lists(_m, len, _constraints, ix, _previous, zeros, ls, ls_acc)
   when len == ix - 1 and zeros == 0 do
-    # IO.inspect Enum.reverse(ls), label: "added ls"
-    # IO.inspect zeros, label: "remaining zeros"
+    IO.inspect Enum.reverse(ls), label: "added ls"
     [Enum.reverse(ls)|ls_acc]
   end
   defp generate_lists(_m, len, _constraints, ix, _previous, zeros, ls, ls_acc)
   when len == ix - 1 and zeros > 0 do
+    IO.inspect Enum.reverse(ls), label: "not added ls"
     ls_acc
   end
   # defp generate_lists(_m, len, _constraints, ix, _previous, _zeros, ls, ls_acc), do: ls_acc
