@@ -65,7 +65,7 @@ defmodule Nhf1 do
   defp helix_solutions(n, m, top, bottom, left, right, constraints, solution) do
     {rows, cols} = table(n, top, bottom, left, right, constraints)
 
-    IO.inspect solution, label: "start"
+    # IO.inspect solution, label: "start"
 
     # Top row
     cyclists(m, n, row_constraints(top, solution))
@@ -75,7 +75,7 @@ defmodule Nhf1 do
           |> Map.new(fn {value, index} -> {{top, index + 1}, value} end)
           |> Map.merge(solution)
 
-        IO.inspect solution, label: "after top row"
+        # IO.inspect solution, label: "after top row"
 
         cyclists(m, n, col_constraints(right, solution))
           |> Enum.reduce(solution, fn values, acc ->
@@ -84,7 +84,7 @@ defmodule Nhf1 do
               |> Map.new(fn {value, index} -> {{index + 1, right}, value} end)
               |> Map.merge(solution)
 
-            IO.inspect solution, label: "after right col"
+            # IO.inspect solution, label: "after right col"
           end)
       end)
 
@@ -140,28 +140,28 @@ defmodule Nhf1 do
   def cyclists(m, len, constraints) do
     constraints = Map.new(constraints)
     zeros = len - m
-    generate_lists(m, len, constraints, 1, 0, m, zeros, [], [])
+    # IO.inspect {m, len, constraints}, label: "start params"
+    generate_lists(m, len, constraints, 1, m, zeros, [], [])
   end
 
-  @spec cycle_num(counter :: integer(), m :: cycle()) :: {cycle :: integer(), num :: value()}
+  @spec cycle_num(number :: integer(), m :: cycle()) :: value()
   # megadja hogy éppen hanyadik ciklusban vagyunk és mi a következő szám a ciklusban
-  defp cycle_num(counter, m) do
-    cycle = div(counter, m) + 1
-    num = rem(counter, m) + 1
-    {cycle, num}
+  def cycle_num(number, m) do
+    rem(number - 1, m) + 1
   end
 
-  @spec candidates(ix :: integer(), zeros :: integer(), constraints :: constraints(), counter :: integer(), m :: cycle(), previous :: integer()) :: [integer()]
+  @spec candidates(ix :: integer(), zeros :: integer(), constraints :: constraints(), m :: cycle(), previous :: integer(), next :: integer()) :: [integer()]
   # megadja a lehetséges számokat
-  defp candidates(ix, zeros, constraints, counter, m, previous) do
-    {cycle, num} = cycle_num(counter, m)
-    candidate = Map.get(constraints, ix, num)
+  defp candidates(ix, zeros, constraints, m, previous, next) do
+    candidate = Map.get(constraints, ix, cycle_num(next, m))
     constraint? = Map.has_key?(constraints, ix)
     zeros? = zeros > 0
     zero? = candidate == 0 and zeros?
     next_in_cycle? = candidate - previous == 1 and candidate != 0
     new_cycle? = candidate - previous == 1 - m and candidate != 0
-    valid_cycle? = cycle <= 1 and (next_in_cycle? or new_cycle?)
+    valid_cycle? = (next_in_cycle? or new_cycle? or ix == 1)
+
+    # IO.inspect {candidate, previous, next}, label: "candidate, previous, next"
 
     cands = cond do
       constraint? and zero? -> [0]
@@ -173,24 +173,32 @@ defmodule Nhf1 do
       true -> []
     end
 
-    IO.inspect cands, label: "candidates"
+    # IO.inspect cands, label: "candidates"
 
     cands
   end
 
-  @spec generate_lists(m :: cycle(), len :: size(), constraints :: constraints(), ix :: index(), counter :: integer(), previous :: integer(), zeros :: integer(), ls :: [value()], ls_acc :: [[value()]]) :: [[value()]]
-  defp generate_lists(_m, len, _constraints, ix, _counter, _previous, _zeros, ls, ls_acc)
-  when len == ix - 1 do
+  @spec generate_lists(m :: cycle(), len :: size(), constraints :: constraints(), ix :: index(), previous :: integer(), zeros :: integer(), ls :: [value()], ls_acc :: [[value()]]) :: [[value()]]
+  defp generate_lists(_m, len, _constraints, ix, _previous, zeros, ls, ls_acc)
+  when len == ix - 1 and zeros == 0 do
+    # IO.inspect Enum.reverse(ls), label: "added ls"
+    # IO.inspect zeros, label: "remaining zeros"
     [Enum.reverse(ls)|ls_acc]
   end
-  defp generate_lists(m, len, constraints, ix, counter, previous, zeros, ls, ls_acc) do
-    candidates(ix, zeros, constraints, counter, m, previous)
+  defp generate_lists(_m, len, _constraints, ix, _previous, zeros, ls, ls_acc)
+  when len == ix - 1 and zeros > 0 do
+    ls_acc
+  end
+  # defp generate_lists(_m, len, _constraints, ix, _previous, _zeros, ls, ls_acc), do: ls_acc
+  defp generate_lists(m, len, constraints, ix, previous, zeros, ls, ls_acc) do
+    # IO.inspect Enum.reverse(ls), label: "ls"
+
+    candidates(ix, zeros, constraints, m, previous, previous + 1)
       |> Enum.reduce(ls_acc, fn candidate, acc ->
         new_zeros = if candidate == 0, do: zeros - 1, else: zeros
-        new_counter = if candidate != 0, do: counter + 1, else: counter
         new_previous = if candidate != 0, do: candidate, else: previous
         new_ls = [candidate|ls]
-        generate_lists(m, len, constraints, ix + 1, new_counter, new_previous, new_zeros, new_ls, acc)
+        generate_lists(m, len, constraints, ix + 1, new_previous, new_zeros, new_ls, acc)
     end)
   end
 end
