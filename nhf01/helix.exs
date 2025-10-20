@@ -61,16 +61,20 @@ defmodule Nhf1 do
     constraints :: constraints(),
     solution :: solution() # current solution
   ) :: [solution()]
-  # 1 x 1
-  defp helix_solutions(n, m, top, bottom, left, right, constraints, _solution) when bottom - top == 0 and right - left == 0 do
-    IO.puts "1x1\n" |> write_log(n, m ,constraints)
-    nil
+  # finish
+  defp helix_solutions(n, m, top, bottom, left, right, constraints, solution) when bottom - top < 0 and right - left < 0 do
+    IO.inspect solution, label: "solution"
   end
-  # 2 x 2
-  defp helix_solutions(n, m, top, bottom, left, right, constraints, _solution) when bottom - top == 1 and right - left == 1 do
-    IO.puts "2x2\n" |> write_log(n, m, constraints)
-    nil
-  end
+  # # 1 x 1
+  # defp helix_solutions(n, m, top, bottom, left, right, constraints, _solution) when bottom - top == 0 and right - left == 0 do
+  #   IO.puts "1x1\n" |> write_log(n, m ,constraints)
+  #   nil
+  # end
+  # # 2 x 2
+  # defp helix_solutions(n, m, top, bottom, left, right, constraints, _solution) when bottom - top == 1 and right - left == 1 do
+  #   IO.puts "2x2\n" |> write_log(n, m, constraints)
+  #   nil
+  # end
   # nagyobb tábla
   defp helix_solutions(n, m, top, bottom, left, right, constraints, solution) do
     {_rows, _cols} = table(n, top, bottom, left, right, constraints)
