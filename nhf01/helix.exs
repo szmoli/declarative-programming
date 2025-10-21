@@ -41,7 +41,7 @@ defmodule Nhf1 do
     _list_zeros = n - m
     reset_log(n, m, constraints)
     #helix_solutions(n, m, 1, n, 1, n, constraints_map, constraints_map)
-    helix_solutions(n, m, 1, n, 1, n, constraints_map, constraints_map)
+    helix_solutions(n, m, 1, n, 1, n, constraints_map, constraints_map, [])
   end
 
   def log_file(n, m, _constraints) do
@@ -61,35 +61,37 @@ defmodule Nhf1 do
     solution :: solution(), # current solution
     solutions :: [solution()]
   ) :: [solution()]
-  defp helix_solutions(n, m, top, bottom, left, right, constraints, solution, solutions)
-  when bottom < top or right < left do
-    "solution accepted: #{inspect(solution)}" |> write_log(n,m,constraints)
-    [solution|solutions]
-  end
-
-  # # finish valid
   # defp helix_solutions(n, m, top, bottom, left, right, constraints, solution, solutions)
-  # when map_size(solution) == (n * n) and bottom < top  and right < left do
-  #   IO.inspect solution, label: "solution accepted"
+  # when bottom < top or right < left do
   #   "solution accepted: #{inspect(solution)}" |> write_log(n,m,constraints)
   #   [solution|solutions]
   # end
-  # # finish invalid
-  # defp helix_solutions(n, m, top, bottom, left, right, constraints, solution, solutions)
-  # when map_size(solution) != (n * n) and bottom < top and right < left do
-  #   IO.inspect solution, label: "solution rejected"
-  #   "solution rejected: #{inspect(solution)}" |> write_log(n,m,constraints)
-  #   solutions
-  # end
-   # nagyobb tábla
-  defp helix_solutions(n, m, top, bottom, left, right, constraints, solution) do
+
+  # finish valid
+  defp helix_solutions(n, m, top, bottom, left, right, constraints, solution, solutions)
+  when map_size(solution) == n * n and bottom < top  and right < left do
+    IO.inspect solution, label: "solution accepted"
+    "solution accepted: #{inspect(solution)}" |> write_log(n,m,constraints)
+    [solution|solutions]
+  end
+  # finish invalid
+  defp helix_solutions(n, m, top, bottom, left, right, constraints, solution, solutions)
+  when map_size(solution) != n * n and bottom < top and right < left do
+    IO.inspect solution, label: "solution rejected"
+    "solution rejected: #{inspect(solution)}" |> write_log(n,m,constraints)
+    solutions
+  end
+  # nagyobb tábla
+  defp helix_solutions(n, m, top, bottom, left, right, constraints, solution, solutions) do
     #IO.inspect solution, label: "start"
     "\nn, top, bottom, left, right: #{inspect({n, top, bottom, left, right})}" |> write_log(n,m,constraints)
-    "gurads: #{bottom < top or right < left}" |> write_log(n, m, constraints)
+    "guards: #{bottom < top or right < left}" |> write_log(n, m, constraints)
     inspect(solution) |> write_log(n, m, constraints)
 
-    # Top row
     first_layer? = top == 1 and bottom == n and left == 1 and right == n
+    partial_solutions = solve_row(top, n, m, first_layer?, solution, [])
+
+    # Top row
     cyclists(m, n, row_constraints(top, solution), !first_layer?)
       |> Enum.reduce(solution, fn values, acc ->
         # IO.inspect values, label: "values"
@@ -150,11 +152,39 @@ defmodule Nhf1 do
                     inspect(solution) |> write_log(n, m, constraints)
                     "layer done" |> write_log(n, m, constraints)
 
-                    helix_solutions(n, m, top + 1, bottom - 1, left + 1, right - 1, solution, solution)
+                    helix_solutions(n, m, top + 1, bottom - 1, left + 1, right - 1, constraints, solution, solutions)
                   end)
               end)
           end)
       end)
+  end
+
+  def solve_row(row_ix, n, m, first_layer?, constraints, row_solutions) do
+    cyclists(m, n, row_constraints(row_ix, constraints), !first_layer?)
+    |> Enum.reduce(row_solutions, fn values, acc ->
+      IO.inspect values, label: "values"
+      inspect(values) |> write_log(n, m ,constraints)
+
+      solution = values
+      |> Enum.with_index
+      |> Map.new(fn {value, index} -> {{row_ix, index + 1}, value} end)
+
+      [solution|acc]
+    end)
+  end
+
+  def solve_col(col_ix, n, m, first_layer?, constraints, col_solutions) do
+    cyclists(m, n, col_constraints(col_ix, constraints), !first_layer?)
+    |> Enum.reduce(col_solutions, fn values, acc ->
+      IO.inspect values, label: "values"
+      inspect(values) |> write_log(n, m ,constraints)
+
+      solution = values
+      |> Enum.with_index
+      |> Map.new(fn {value, index} -> {{index + 1, col_ix}, value} end)
+
+      [solution|acc]
+    end)
   end
 
   def row_constraints(row_ix, constraints) do
@@ -219,9 +249,9 @@ defmodule Nhf1 do
     rem(number - 1, m) + 1
   end
 
-  @spec candidates(ix :: integer(), zeros :: integer(), constraints :: constraints(), m :: cycle(), previous :: integer(), next :: integer()) :: [integer()]
+  @spec candidates(ix :: integer(), zeros :: integer(), constraints :: constraints(), m :: cycle(), previous :: integer(), next :: integer(), first_any? :: boolean()) :: [integer()]
   # megadja a lehetséges számokat
-  defp candidates(ix, zeros, constraints, m, previous, next) do
+  defp candidates(ix, zeros, constraints, m, previous, next, first_any?) do
     next = cycle_num(next, m)
     candidate = Map.get(constraints, ix, next)
     constraint? = Map.has_key?(constraints, ix)
@@ -230,6 +260,7 @@ defmodule Nhf1 do
     next_in_cycle? = candidate - previous == 1 and candidate != 0
     new_cycle? = candidate - previous == 1 - m and candidate != 0
     valid_cycle? = (next_in_cycle? or new_cycle? or ix == 1)
+    use_every_value? = ix == 1 and first_any?
 
     # IO.inspect {candidate, previous, next}, label: "candidate, previous, next"
 
@@ -237,6 +268,8 @@ defmodule Nhf1 do
       constraint? and zero? -> [0]
       constraint? and valid_cycle? -> [Map.get(constraints, ix)]
       constraint? and not valid_cycle? -> []
+      use_every_value? and zeros? -> [0|Enum.to_list(1..m)]
+      use_every_value? -> Enum.to_list(1..m)
       zeros? and valid_cycle? -> [0, candidate]
       zeros? -> [0]
       valid_cycle? -> [candidate]
@@ -260,17 +293,18 @@ defmodule Nhf1 do
     ls_acc
   end
   # defp generate_lists(_m, len, _constraints, ix, _previous, _zeros, ls, ls_acc), do: ls_acc
-  defp generate_lists(m, len, constraints, ix, previous, zeros, ls, ls_acc, true) do
+  defp generate_lists(m, len, constraints, ix, previous, zeros, ls, ls_acc, first_any?) do
     # IO.inspect Enum.reverse(ls), label: "ls"
 
     # start = previous + 1
     # start..m
     # |> Enum.to_list
     # |> Enum.reduce(ls_acc, fn next, acc ->
-    start = if zeros > 0, do: 0, else: 1
-    numbers = if ix == 1, do: Enum.to_list(start..m), else: candidates(ix, zeros, constraints, m, previous, previous + 1)
+    # start = if zeros > 0, do: 0, else: 1
+    # numbers = if ix == 1, do: Enum.to_list(start..m), else: candidates(ix, zeros, constraints, m, previous, previous + 1)
 
-    numbers
+    # numbers
+    candidates(ix, zeros, constraints, m, previous, previous + 1, first_any?)
     |> Enum.reduce(ls_acc, fn candidate, acc ->
       new_zeros = if candidate == 0, do: zeros - 1, else: zeros
       new_previous = if candidate != 0, do: candidate, else: previous
@@ -279,21 +313,21 @@ defmodule Nhf1 do
     end)
   end
 
-  defp generate_lists(m, len, constraints, ix, previous, zeros, ls, ls_acc, false) do
-    # IO.inspect Enum.reverse(ls), label: "ls"
+  # defp generate_lists(m, len, constraints, ix, previous, zeros, ls, ls_acc, false) do
+  #   # IO.inspect Enum.reverse(ls), label: "ls"
 
-    # start = previous + 1
-    # start..m
-    # |> Enum.to_list
-    # |> Enum.reduce(ls_acc, fn next, acc ->
-    candidates(ix, zeros, constraints, m, previous, previous + 1)
-    |> Enum.reduce(ls_acc, fn candidate, acc ->
-      new_zeros = if candidate == 0, do: zeros - 1, else: zeros
-      new_previous = if candidate != 0, do: candidate, else: previous
-      new_ls = [candidate|ls]
-      generate_lists(m, len, constraints, ix + 1, new_previous, new_zeros, new_ls, acc, true)
-    end)
-  end
+  #   # start = previous + 1
+  #   # start..m
+  #   # |> Enum.to_list
+  #   # |> Enum.reduce(ls_acc, fn next, acc ->
+  #   candidates(ix, zeros, constraints, m, previous, previous + 1)
+  #   |> Enum.reduce(ls_acc, fn candidate, acc ->
+  #     new_zeros = if candidate == 0, do: zeros - 1, else: zeros
+  #     new_previous = if candidate != 0, do: candidate, else: previous
+  #     new_ls = [candidate|ls]
+  #     generate_lists(m, len, constraints, ix + 1, new_previous, new_zeros, new_ls, acc, true)
+  #   end)
+  # end
 end
 
 defmodule DebugModule do
