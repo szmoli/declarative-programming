@@ -89,78 +89,23 @@ defmodule Nhf1 do
     inspect(solution) |> write_log(n, m, constraints)
 
     first_layer? = top == 1 and bottom == n and left == 1 and right == n
-    partial_solutions = solve_row(top, n, m, first_layer?, solution, [])
-
-    # Top row
-    cyclists(m, n, row_constraints(top, solution), !first_layer?)
-      |> Enum.reduce(solution, fn values, acc ->
-        # IO.inspect values, label: "values"
-        inspect(values) |> write_log(n, m ,constraints)
-
-        solution = values
-          |> Enum.with_index
-          |> Map.new(fn {value, index} -> {{top, index + 1}, value} end)
-          |> Map.merge(acc)
-
-        #IO.inspect solution, label: "after top row"
-        "after top row" |> write_log(n, m, constraints)
-        inspect(solution) |> write_log(n, m, constraints)
-
-        # Right col
-        cyclists(m, n, col_constraints(right, solution), true)
-          |> Enum.reduce(solution, fn values, acc ->
-            # IO.inspect values, label: "values"
-            inspect(values) |> write_log(n, m ,constraints)
-
-            solution = values
-              |> Enum.with_index
-              |> Map.new(fn {value, index} -> {{index + 1, right}, value} end)
-              |> Map.merge(acc)
-
-            #IO.inspect solution, label: "after right col"
-            "after right col" |> write_log(n, m, constraints)
-            inspect(solution) |> write_log(n, m, constraints)
-
-            # Bottom row
-            cyclists(m, n, row_constraints(bottom, solution), true)
-              |> Enum.reduce(solution, fn values, acc ->
-                inspect(values) |> write_log(n, m ,constraints)
-
-                solution = values
-                  |> Enum.with_index
-                  |> Map.new(fn {value, index} -> {{bottom, index + 1}, value} end)
-                  |> Map.merge(acc)
-
-                #IO.inspect solution, label: "after bottom row"
-                "after bottom row" |> write_log(n, m, constraints)
-                inspect(solution) |> write_log(n, m, constraints)
-
-
-                # Left col
-                cyclists(m, n, col_constraints(left, solution), true)
-                  |> Enum.reduce(solution, fn values, acc ->
-                    # IO.inspect values, label: "values"
-                    inspect(values) |> write_log(n, m ,constraints)
-
-                    solution = values
-                      |> Enum.with_index
-                      |> Map.new(fn {value, index} -> {{index + 1, left}, value} end)
-                      |> Map.merge(acc)
-
-                    #IO.inspect solution, label: "final solution, after left col"
-                    "final, after left col" |> write_log(n, m, constraints)
-                    inspect(solution) |> write_log(n, m, constraints)
-                    "layer done" |> write_log(n, m, constraints)
-
-                    helix_solutions(n, m, top + 1, bottom - 1, left + 1, right - 1, constraints, solution, solutions)
-                  end)
-              end)
+    solve_row(top, n, m, first_layer?, solution, [])
+    |> Enum.reduce(solutions, fn constraints, acc ->
+      solve_col(right, n, m, true, constraints, [])
+      |> Enum.reduce(acc, fn constraints, acc ->
+        solve_row(bottom, n, m, true, constraints, [])
+        |> Enum.reduce(acc, fn constraints, acc ->
+          solve_col(left, n, m, true, constraints, [])
+          |> Enum.reduce(acc, fn constraints, acc ->
+            helix_solutions(n, m, top + 1, bottom - 1, left + 1, right - 1, constraints, constraints, acc)
           end)
+        end)
       end)
+    end)
   end
 
-  def solve_row(row_ix, n, m, first_layer?, constraints, row_solutions) do
-    cyclists(m, n, row_constraints(row_ix, constraints), !first_layer?)
+  def solve_row(row_ix, n, m, first_any?, constraints, row_solutions) do
+    cyclists(m, n, row_constraints(row_ix, constraints), first_any?)
     |> Enum.reduce(row_solutions, fn values, acc ->
       IO.inspect values, label: "values"
       inspect(values) |> write_log(n, m ,constraints)
@@ -173,8 +118,8 @@ defmodule Nhf1 do
     end)
   end
 
-  def solve_col(col_ix, n, m, first_layer?, constraints, col_solutions) do
-    cyclists(m, n, col_constraints(col_ix, constraints), !first_layer?)
+  def solve_col(col_ix, n, m, first_any?, constraints, col_solutions) do
+    cyclists(m, n, col_constraints(col_ix, constraints), first_any?)
     |> Enum.reduce(col_solutions, fn values, acc ->
       IO.inspect values, label: "values"
       inspect(values) |> write_log(n, m ,constraints)

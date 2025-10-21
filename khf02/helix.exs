@@ -36,7 +36,7 @@ defmodule Khf2 do
   # Csak N és M adott
   def helix([size_str | [_cycle_str]]) do
     size = size_str |> String.trim() |> String.to_integer()
-    helix(1, size, 1, size, %{}, [])
+    Enum.reverse(helix(1, size, 1, size, %{}, []))
   end
 
   # N és M mellett valahány mező értéke is adott
@@ -53,15 +53,19 @@ defmodule Khf2 do
       end)
       |> Map.new()
 
-    helix(1, size, 1, size, field_values, [])
+    Enum.reverse(helix(1, size, 1, size, field_values, []))
   end
 
   @spec helix(top :: integer(), bottom :: integer(), left :: integer(), right :: integer(), field_values :: %{field_value() => integer()}, acc :: [field_opt_value()]) :: [field_opt_value()]
   # Iteratívan bejárjuk a mátrixot a külső rétegtől befelé
+  # finito
+  defp helix(top, bottom, left, right, field_values, acc) when bottom < top and right < left do
+    acc
+  end
   # 1x1
   defp helix(top, bottom, left, right, field_values, acc) when bottom - top == 0 and right - left == 0 do
     field = {top, left}
-    [{field, Map.get(field_values, field)} | acc] |> Enum.reverse()
+    [{field, Map.get(field_values, field)} | acc]
   end
   # 2x2
   defp helix(top, bottom, left, right, field_values, acc) when bottom - top == 1 and right - left == 1 do
@@ -77,7 +81,7 @@ defmodule Khf2 do
     res2 = {field2, val2}
     res3 = {field3, val3}
     res4 = {field4, val4}
-    [res4|[res3|[res2|[res1|acc]]]] |> Enum.reverse()
+    [res4|[res3|[res2|[res1|acc]]]]
   end
   # nagyobb
   defp helix(top, bottom, left, right, field_values, acc) do
