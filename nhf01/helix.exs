@@ -42,6 +42,10 @@ defmodule Nhf1 do
     reset_log(n, m, constraints)
     #helix_solutions(n, m, 1, n, 1, n, constraints_map, constraints_map)
     helix_solutions(n, m, 1, n, 1, n, constraints_map, constraints_map, [])
+    |> Enum.reverse
+    |> Enum.map(fn map -> Map.to_list(map) end)
+    |> Enum.map(fn list -> Enum.map(list, fn {{_, _}, val} -> val end) end)
+    |> Enum.map(&Enum.chunk_every(&1, n))
   end
 
   def log_file(n, m, _constraints) do
@@ -66,18 +70,46 @@ defmodule Nhf1 do
   #   "solution accepted: #{inspect(solution)}" |> write_log(n,m,constraints)
   #   [solution|solutions]
   # end
-
+# defp helix_solutions(n, m, top, bottom, left, right, constraints, solution, solutions)
+# when map_size(solution) == n * n and bottom < top and right < left do
+#   "solution accepted: #{inspect(solution)}" |> write_log(n, m, constraints)
+#   [solution | solutions]
+# end
+#
+# defp helix_solutions(n, m, top, bottom, left, right, constraints, solution, solutions)
+# when map_size(solution) != n * n and bottom < top and right < left do
+#   "solution rejected: #{inspect(solution)}" |> write_log(n, m, constraints)
+#   solutions
+# end
+#
+# defp helix_solutions(n, m, top, bottom, left, right, constraints, solution, solutions) do
+#   first_layer? = top == 1 and bottom == n and left == 1 and right == n
+#
+#   # Generate all combinations and accumulate solutions
+#   combinations = for top_row_solution <- solve_row(top, n, m, !first_layer?, solution, []),
+#                    right_col_solution <- solve_col(right, n, m, true, Map.merge(solution, top_row_solution), []),
+#                    bottom_row_solution <- solve_row(bottom, n, m, true, Map.merge(Map.merge(solution, top_row_solution), right_col_solution), []),
+#                    left_col_solution <- solve_col(left, n, m, true, Map.merge(Map.merge(Map.merge(solution, top_row_solution), right_col_solution), bottom_row_solution), []) do
+#     full_solution = Map.merge(Map.merge(Map.merge(Map.merge(solution, top_row_solution), right_col_solution), bottom_row_solution), left_col_solution)
+#     full_solution
+#   end
+#
+#   # Process each combination and accumulate solutions
+#   Enum.reduce(combinations, solutions, fn layer_solution, acc ->
+#     helix_solutions(n, m, top + 1, bottom - 1, left + 1, right - 1, constraints, layer_solution, acc)
+#   end)
+# end
   # finish valid
   defp helix_solutions(n, m, top, bottom, left, right, constraints, solution, solutions)
   when map_size(solution) == n * n and bottom < top  and right < left do
-    IO.inspect solution, label: "solution accepted"
+    #IO.inspect solution, label: "solution accepted"
     "solution accepted: #{inspect(solution)}" |> write_log(n,m,constraints)
     [solution|solutions]
   end
   # finish invalid
   defp helix_solutions(n, m, top, bottom, left, right, constraints, solution, solutions)
   when map_size(solution) != n * n and bottom < top and right < left do
-    IO.inspect solution, label: "solution rejected"
+    #IO.inspect solution, label: "solution rejected"
     "solution rejected: #{inspect(solution)}" |> write_log(n,m,constraints)
     solutions
   end
@@ -85,19 +117,25 @@ defmodule Nhf1 do
   defp helix_solutions(n, m, top, bottom, left, right, constraints, solution, solutions) do
     #IO.inspect solution, label: "start"
     "\nn, top, bottom, left, right: #{inspect({n, top, bottom, left, right})}" |> write_log(n,m,constraints)
-    "guards: #{bottom < top or right < left}" |> write_log(n, m, constraints)
     inspect(solution) |> write_log(n, m, constraints)
 
     first_layer? = top == 1 and bottom == n and left == 1 and right == n
-    solve_row(top, n, m, first_layer?, solution, [])
-    |> Enum.reduce(solutions, fn constraints, acc ->
-      solve_col(right, n, m, true, constraints, [])
-      |> Enum.reduce(acc, fn constraints, acc ->
-        solve_row(bottom, n, m, true, constraints, [])
-        |> Enum.reduce(acc, fn constraints, acc ->
-          solve_col(left, n, m, true, constraints, [])
-          |> Enum.reduce(acc, fn constraints, acc ->
-            helix_solutions(n, m, top + 1, bottom - 1, left + 1, right - 1, constraints, constraints, acc)
+    solve_row(top, n, m, !first_layer?, solution, [])
+    |> Enum.reduce(solutions, fn top_row_solution, acc1 ->
+      "row#{top}: #{inspect(top_row_solution)}" |> write_log(n, m, constraints)
+      constraints_after_top_row = Map.merge(solution, top_row_solution)
+      solve_col(right, n, m, true, constraints_after_top_row, [])
+      |> Enum.reduce(acc1, fn right_col_solution, acc2 ->
+        "col#{right}: #{inspect(right_col_solution)}" |> write_log(n, m, constraints)
+        constraints_after_right_col = Map.merge(constraints_after_top_row, right_col_solution)
+        solve_row(bottom, n, m, true, constraints_after_right_col, [])
+        |> Enum.reduce(acc2, fn bottom_row_solution, acc3 ->
+          constraints_after_bottom_row = Map.merge(constraints_after_right_col, bottom_row_solution)
+          solve_col(left, n, m, true, constraints_after_bottom_row, [])
+          |> Enum.reduce(acc3, fn left_col_solution, acc4 ->
+            constraints_after_left_col = Map.merge(constraints_after_bottom_row, left_col_solution)
+            layer_solution = constraints_after_left_col
+            helix_solutions(n, m, top + 1, bottom - 1, left + 1, right - 1, constraints, layer_solution, acc4)
           end)
         end)
       end)
@@ -107,8 +145,8 @@ defmodule Nhf1 do
   def solve_row(row_ix, n, m, first_any?, constraints, row_solutions) do
     cyclists(m, n, row_constraints(row_ix, constraints), first_any?)
     |> Enum.reduce(row_solutions, fn values, acc ->
-      IO.inspect values, label: "values"
-      inspect(values) |> write_log(n, m ,constraints)
+      #IO.inspect values, label: "values"
+      "possible for row#{row_ix}: #{inspect(values)}" |> write_log(n, m ,constraints)
 
       solution = values
       |> Enum.with_index
@@ -121,8 +159,8 @@ defmodule Nhf1 do
   def solve_col(col_ix, n, m, first_any?, constraints, col_solutions) do
     cyclists(m, n, col_constraints(col_ix, constraints), first_any?)
     |> Enum.reduce(col_solutions, fn values, acc ->
-      IO.inspect values, label: "values"
-      inspect(values) |> write_log(n, m ,constraints)
+      #IO.inspect values, label: "values"
+      "possible for col#{col_ix}: #{inspect(values)}" |> write_log(n, m ,constraints)
 
       solution = values
       |> Enum.with_index
@@ -184,7 +222,7 @@ defmodule Nhf1 do
   def cyclists(m, len, constraints, start_any?) do
     zeros = len - m
     # IO.inspect constraints, label: "constraints"
-    IO.inspect {m, len, constraints}, label: "start params"
+    #IO.inspect {m, len, constraints}, label: "start params"
     generate_lists(m, len, constraints, 1, m, zeros, [], [], start_any?)
   end
 
@@ -229,12 +267,12 @@ defmodule Nhf1 do
   @spec generate_lists(m :: cycle(), len :: size(), constraints :: constraints(), ix :: index(), previous :: integer(), zeros :: integer(), ls :: [value()], ls_acc :: [[value()]], first_any? :: boolean()) :: [[value()]]
   defp generate_lists(_m, len, _constraints, ix, _previous, zeros, ls, ls_acc, _first_any?)
   when len == ix - 1 and zeros == 0 do
-    # IO.inspect Enum.reverse(ls), label: "added ls"
+    #IO.inspect Enum.reverse(ls), label: "added ls"
     [Enum.reverse(ls)|ls_acc]
   end
-  defp generate_lists(_m, len, _constraints, ix, _previous, zeros, _ls, ls_acc, _first_any?)
+  defp generate_lists(_m, len, _constraints, ix, _previous, zeros, ls, ls_acc, _first_any?)
   when len == ix - 1 and zeros > 0 do
-    # IO.inspect Enum.reverse(ls), label: "not added ls"
+    #IO.inspect Enum.reverse(ls), label: "not added ls"
     ls_acc
   end
   # defp generate_lists(_m, len, _constraints, ix, _previous, _zeros, ls, ls_acc), do: ls_acc
@@ -273,26 +311,4 @@ defmodule Nhf1 do
   #     generate_lists(m, len, constraints, ix + 1, new_previous, new_zeros, new_ls, acc, true)
   #   end)
   # end
-end
-
-defmodule DebugModule do
-  # Version 1: With guard
-  def test_guard(n, top, bottom, left, right, mp)
-  when map_size(mp) == (n * n) and bottom < top  and right < left do
-    IO.puts "GUARD MATCHED"
-    {:guard_matched, n, top, bottom, left, right, mp}
-  end
-
-  # Version 2: Without guard (catch-all)
-  def test_guard(n, top, bottom, left, right, mp) do
-    IO.puts "GUARD NOT MATCHED"
-    IO.inspect(map_size(mp), label: "map_size(mp)")
-    IO.inspect(n * n, label: "n * n")
-    IO.inspect(bottom - top, label: "bottom - top")
-    IO.inspect(right - left, label: "right - left")
-    IO.inspect(map_size(mp) == n * n, label: "size_match?")
-    IO.inspect(bottom < top, label: "vertical_cond?")
-    IO.inspect(right < left, label: "horizontal_cond?")
-    {:guard_not_matched, n, top, bottom, left, right, mp}
-  end
 end
