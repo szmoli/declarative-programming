@@ -1,32 +1,43 @@
 % Készítette: Szmoleniczki Ákos, YL2JJ2 (szmoleniczki.akos@edu.bme.hu)
 % Dátum: 2025-11-02
 
-% use_module(library(lists)).
+at(1, [H|_], H).
+at(N, [_|T], Elem) :-
+    N > 1,
+    N1 is N - 1,
+    at(N1, T, Elem).
+
+without_zeros([], []).
+without_zeros([0|T], Result) :-
+    without_zeros(T, Result).
+without_zeros([H|T], [H|Result]) :-
+    H \== 0,
+    without_zeros(T, Result).
 
 % Row is the Nth row of Matrix.
 row(Matrix, Nth, Row) :-
-	nth1(Nth, Matrix, Row).
+	at(Nth, Matrix, Row).
     
 % Col is the Nth col of Matrix.
 column(Matrix, Nth, Col) :-
-	maplist(nth1(Nth), Matrix, Col).
+	maplist(at(Nth), Matrix, Col).
 	
 % Size is the size of Matrix.
 size(Matrix, Size) :- 
     length(Matrix, Size).
 
-% range(Start, End, Number) :-
-%     integer(Start),
-%     integer(End),
-%     Start =< End,
-%     range_recursive(Start, End, Number).
-% 
-% range_recursive(Cur, End, Cur) :-
-%     Cur =< End.
-% range_recursive(Cur, End, Num) :-
-%     Cur < End,
-%     Next is Cur + 1,
-%     range_recursive(Next, End, Num).
+range(Start, End, Num) :-
+    integer(Start),
+    integer(End),
+    Start =< End,
+    range_recursive(Start, End, Num).
+
+range_recursive(Cur, End, Cur) :-
+    Cur =< End.
+range_recursive(Cur, End, Num) :-
+    Cur < End,
+    Next is Cur + 1,
+    range_recursive(Next, End, Num).
 
 % Zeros is the number of zeros in each column or row.
 % Zeros = Size - M.
@@ -42,7 +53,7 @@ correct_list(M, ExpectedZeros, List) :-
     count(0, List, ActualZeros),
     ActualZeros =:= ExpectedZeros,
     Len =:= M + ActualZeros,
-    exclude(==(0), List, WithoutZeros),
+    without_zeros(List, WithoutZeros),
     numlist(1, M, Expected),
     msort(WithoutZeros, Sorted),
     Sorted == Expected.
@@ -111,14 +122,14 @@ helix_recursive(Top, Left, Bottom, Right, Matrix, Acc, Result) :-
 
 % Element is the element of Matrix at (Row, Col).
 element(Matrix, Row, Column, Element) :-
-    nth1(Row, Matrix, R),
-    nth1(Column, R, Element).
+    at(Row, Matrix, R),
+    at(Column, R, Element).
 
 % Slice is the slice from Start to End of List.
 slice(List, Start, End, Slice) :-
     findall(Element, 
-            (between(Start, End, Index), 
-                nth1(Index, List, Element)), 
+            (range(Start, End, Index), 
+                at(Index, List, Element)), 
             Slice).   
 
 % Sequence is a list of the numbers 1..M N times.
@@ -138,7 +149,7 @@ tekercsekk(M, Matrix) :-
     size(Matrix, Size),
     zeros(M, Matrix, ExpectedZeros),
     findall(Row, 
-        (between(1, Size, Nth),
+        (range(1, Size, Nth),
         row(Matrix, Nth, Row),
         correct_list(M, ExpectedZeros, Row)),
         Rows
@@ -146,7 +157,7 @@ tekercsekk(M, Matrix) :-
     size(Rows, CorrectRowCount),
     CorrectRowCount =:= Size,
     findall(Column, 
-        (between(1, Size, Nth),
+        (range(1, Size, Nth),
         column(Matrix, Nth, Column),
         correct_list(M, ExpectedZeros, Column)),
         Columns
@@ -154,6 +165,6 @@ tekercsekk(M, Matrix) :-
     size(Columns, CorrectColumnCount),
     CorrectColumnCount =:= Size,
     helix(Matrix, Helix),
-    exclude(==(0), Helix, HelixWithoutZeros),
+    without_zeros(Helix, HelixWithoutZeros),
     sequence(Size, M, Sequence),
     HelixWithoutZeros == Sequence.
