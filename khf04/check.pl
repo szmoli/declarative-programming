@@ -14,6 +14,16 @@ without_zeros([H|T], [H|Result]) :-
     H \== 0,
     without_zeros(T, Result).
 
+numbers(From, To, List) :-
+    numbers_recursive(From, To, List).
+
+numbers_recursive(From, To, []) :-
+    From > To.
+numbers_recursive(From, To, [From|Rest]) :-
+    From =< To,
+    Next is From + 1,
+    numbers_recursive(Next, To, Rest).
+
 % Row is the Nth row of Matrix.
 row(Matrix, Nth, Row) :-
 	at(Nth, Matrix, Row).
@@ -54,7 +64,7 @@ correct_list(M, ExpectedZeros, List) :-
     ActualZeros =:= ExpectedZeros,
     Len =:= M + ActualZeros,
     without_zeros(List, WithoutZeros),
-    numlist(1, M, Expected),
+    numbers(1, M, Expected),
     msort(WithoutZeros, Sorted),
     Sorted == Expected.
 
@@ -139,7 +149,7 @@ sequence(N, M, Sequence) :-
 sequence(0, _, Acc, Acc). 
 sequence(N, M, Acc, Sequence) :-
     N > 0,
-    numlist(1, M, Pattern),
+    numbers(1, M, Pattern),
     append(Acc, Pattern, NewAcc),
     N1 is N - 1,
     sequence(N1, M, NewAcc, Sequence).
