@@ -1,5 +1,6 @@
 export
 logs
+*.ova
 
 /_build
 /cover
