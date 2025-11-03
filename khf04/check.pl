@@ -2,29 +2,7 @@
 % Dátum: 2025-11-02
 
 :- use_module(library(lists)).
-
-at(1, [H|_], H).
-at(N, [_|T], Elem) :-
-    N > 1,
-    N1 is N - 1,
-    at(N1, T, Elem).
-
-without_zeros([], []).
-without_zeros([0|T], Result) :-
-    without_zeros(T, Result).
-without_zeros([H|T], [H|Result]) :-
-    H \== 0,
-    without_zeros(T, Result).
-
-numbers(From, To, List) :-
-    numbers_recursive(From, To, List).
-
-numbers_recursive(From, To, []) :-
-    From > To.
-numbers_recursive(From, To, [From|Rest]) :-
-    From =< To,
-    Next is From + 1,
-    numbers_recursive(Next, To, Rest).
+:- use_module(library(between)).
 
 % Row is the Nth row of Matrix.
 row(Matrix, Nth, Row) :-
@@ -37,19 +15,6 @@ column(Matrix, Nth, Col) :-
 % Size is the size of Matrix.
 size(Matrix, Size) :- 
     length(Matrix, Size).
-
-range(Start, End, Num) :-
-    integer(Start),
-    integer(End),
-    Start =< End,
-    range_recursive(Start, End, Num).
-
-range_recursive(Cur, End, Cur) :-
-    Cur =< End.
-range_recursive(Cur, End, Num) :-
-    Cur < End,
-    Next is Cur + 1,
-    range_recursive(Next, End, Num).
 
 % Zeros is the number of zeros in each column or row.
 % Zeros = Size - M.
@@ -65,8 +30,8 @@ correct_list(M, ExpectedZeros, List) :-
     count(0, List, ActualZeros),
     ActualZeros =:= ExpectedZeros,
     Len =:= M + ActualZeros,
-    without_zeros(List, WithoutZeros),
-    numbers(1, M, Expected),
+    exclude(==(0), List, WithoutZeros),
+    numlist(1, M, Expected),
     sort(WithoutZeros, Sorted),
     Sorted == Expected.
 
@@ -158,6 +123,7 @@ sequence(N, M, Acc, Sequence) :-
 
 % Checks if Matrix is a valid solution to the helix problem given by M.
 tekercsekk(M, Matrix) :-
+    write(debug_tekercsekk_called(M,Matrix)), nl,
     size(Matrix, Size),
     zeros(M, Matrix, ExpectedZeros),
     findall(Row, 
