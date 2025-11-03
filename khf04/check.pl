@@ -1,7 +1,8 @@
 % Készítette: Szmoleniczki Ákos, YL2JJ2 (szmoleniczki.akos@edu.bme.hu)
 % Dátum: 2025-11-02
 
-% use_module(library(lists)).
+:- use_module(library(lists)).
+:- use_module(library(between)).
 
 % Row is the Nth row of Matrix.
 row(Matrix, Nth, Row) :-
@@ -14,19 +15,6 @@ column(Matrix, Nth, Col) :-
 % Size is the size of Matrix.
 size(Matrix, Size) :- 
     length(Matrix, Size).
-
-% range(Start, End, Number) :-
-%     integer(Start),
-%     integer(End),
-%     Start =< End,
-%     range_recursive(Start, End, Number).
-% 
-% range_recursive(Cur, End, Cur) :-
-%     Cur =< End.
-% range_recursive(Cur, End, Num) :-
-%     Cur < End,
-%     Next is Cur + 1,
-%     range_recursive(Next, End, Num).
 
 % Zeros is the number of zeros in each column or row.
 % Zeros = Size - M.
@@ -44,7 +32,7 @@ correct_list(M, ExpectedZeros, List) :-
     Len =:= M + ActualZeros,
     exclude(==(0), List, WithoutZeros),
     numlist(1, M, Expected),
-    msort(WithoutZeros, Sorted),
+    sort(WithoutZeros, Sorted),
     Sorted == Expected.
 
 % Count is the number of Elements in List.
@@ -135,6 +123,7 @@ sequence(N, M, Acc, Sequence) :-
 
 % Checks if Matrix is a valid solution to the helix problem given by M.
 tekercsekk(M, Matrix) :-
+    write(debug_tekercsekk_called(M,Matrix)), nl,
     size(Matrix, Size),
     zeros(M, Matrix, ExpectedZeros),
     findall(Row, 
