@@ -1,6 +1,8 @@
 % Készítette: Szmoleniczki Ákos, YL2JJ2 (szmoleniczki.akos@edu.bme.hu)
 % Dátum: 2025-11-02
 
+:- use_module(library(lists)).
+
 at(1, [H|_], H).
 at(N, [_|T], Elem) :-
     N > 1,
@@ -65,7 +67,7 @@ correct_list(M, ExpectedZeros, List) :-
     Len =:= M + ActualZeros,
     without_zeros(List, WithoutZeros),
     numbers(1, M, Expected),
-    msort(WithoutZeros, Sorted),
+    sort(WithoutZeros, Sorted),
     Sorted == Expected.
 
 % Count is the number of Elements in List.
