@@ -224,13 +224,15 @@ szukitett_oszlop(Oszlopszam, MxBe, SzTOszlop, MxKi) :-
 
 ismert_szukites(szt(_N, _M, _), [], []).
 
-
+ismert_szukites(szt(_N, _M, _), MxBe, MxBe) :-
+    \+ (member(TSor, MxBe), member(TErtek, TSor), adott(TErtek, _E)).
 
 % :- pred ismert_szukites(feladvany_leiro::in, t_matrix::in, t_matrix::out).
-% ismert_szukites(szt(N, M, _), MxBe, _MxKi) :-
-%     ertek(Sorszam, Oszlopszam, MxBe, TErtek),
-%     adott(TErtek, Ertek),
-%     sor(Sorszam, MxBe, TSor),
-%     szukites(Ertek, TSor, SzTSor),
-%     oszlop(Oszlopszam, MxBe, TOszlop),
-%     szukites(Ertek, TOszlop, SzTOszlop).
+ismert_szukites(szt(N, M, _), MxBe, MxKi) :-
+    member(TSor, MxBe),
+    member(TErtek, TSor),
+    adott(TErtek, Ertek),
+    nth1(Sorszam, MxBe, TSor),
+    nth1(Oszlopszam, TSor, TErtek),
+    szukites(Ertek, Sorszam, Oszlopszam, N, M, MxBe, MxSzukitett),
+    ismert_szukites(szt(N, M, _), MxSzukitett, MxKi).
