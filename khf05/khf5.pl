@@ -1,3 +1,12 @@
+% Szmoleniczki Ákos (szmoleniczki.akos@edu.bme.hu)
+% 2025-11-10
+%  Minimális segítségkérések a ChatGPT-től a feladat megoldása során:
+% - Elmagyarázta a Prolog \+ (negáció) operátor működését és alternatíváit.
+% - Segített megtalálni, miért generált több megoldást az ismert_szukites/3, mint amennyi várt volt.
+% - Rámutatott, hogy a rekurzió miatt a predikátum többször visszatérhetett ugyanazzal az eredménnyel.
+% - Segített megoldani, hogy az ismert_szukites/3 bukjon el, ha nincsenek ismert értékek a mátrixban.
+% - Segített pontosítani a vágások (!) helyes használatát.
+
 :- use_module(library(lists)).
 :- use_module(library(clpfd)).
 
@@ -222,10 +231,10 @@ szukitett_oszlop(Oszlopszam, MxBe, SzTOszlop, MxKi) :-
     nth1(Oszlopszam, MxKiT, SzTOszlop, Maradek),
     transpose(MxKiT, MxKi).
 
-ismert_szukites(szt(_N, _M, _), [], []).
+ismert_szukites(szt(_N, _M, _), [], []) :- !.
 
 ismert_szukites(szt(_N, _M, _), MxBe, MxBe) :-
-    \+ (member(TSor, MxBe), member(TErtek, TSor), adott(TErtek, _E)).
+    \+ (member(TSor, MxBe), member(TErtek, TSor), adott(TErtek, _E)), !.
 
 % :- pred ismert_szukites(feladvany_leiro::in, t_matrix::in, t_matrix::out).
 ismert_szukites(szt(N, M, _), MxBe, MxKi) :-
@@ -235,4 +244,4 @@ ismert_szukites(szt(N, M, _), MxBe, MxKi) :-
     nth1(Sorszam, MxBe, TSor),
     nth1(Oszlopszam, TSor, TErtek),
     szukites(Ertek, Sorszam, Oszlopszam, N, M, MxBe, MxSzukitett),
-    ismert_szukites(szt(N, M, _), MxSzukitett, MxKi).
+    ismert_szukites(szt(N, M, _), MxSzukitett, MxKi), !.
