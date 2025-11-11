@@ -233,8 +233,12 @@ szukitett_oszlop(Oszlopszam, MxBe, SzTOszlop, MxKi) :-
 
 ismert_szukites(szt(_N, _M, _), [], []) :- !.
 
-ismert_szukites(szt(_N, _M, _), MxBe, MxBe) :-
-    \+ (member(TSor, MxBe), member(TErtek, TSor), adott(TErtek, _E)), !.
+ismert_szukites(szt(_N,_M,_), MxBe, _) :-
+    \+ (member(TSor, MxBe), member(TErtek, TSor), adott(TErtek,_)),
+    !, fail.  % nincs ismert elem, fail
+
+ismert_szukites(szt(_N,_M,_), MxBe, MxBe) :-
+    \+ (member(TSor, MxBe), member(TErtek, TSor), adott(TErtek,_)), !.
 
 % :- pred ismert_szukites(feladvany_leiro::in, t_matrix::in, t_matrix::out).
 ismert_szukites(szt(N, M, _), MxBe, MxKi) :-
