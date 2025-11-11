@@ -23,28 +23,21 @@
 % :- type t_ertek           == list(integer) \/ integer.  % egészek listája vagy egész
 
 % :- pred szamok(integer::in, integer::in, t_ertek::out).
-szamok(Tol, Tol, [Tol]) :- !. 
-
+szamok(Tol, Ig, []) :-
+    Tol > Ig, !.
 szamok(Tol, Ig, [Tol|Maradek]) :-
-    Tol < Ig,
-    Tol1 is Tol + 1,
-    szamok(Tol1, Ig, Maradek).
-
-szamok(Tol, Ig, [Tol|Maradek]) :-
-    Tol > Ig,
-    Tol1 is Tol - 1,
-    szamok(Tol1, Ig, Maradek).
+    Kovetkezo is Tol + 1,
+    szamok(Kovetkezo, Ig, Maradek).
 
 % :- pred t_ertek(sorszam::in, oszlopszam::in, feladvany_leiro::in, t_ertek::out).
 t_ertek(Sorszam, Oszlopszam, szt(_N, _M, Adottak), [Adott]) :-
     member(i(Sorszam, Oszlopszam, Adott), Adottak), !.
 
-t_ertek(_Sorszam, _Oszlopszam, szt(N, M, _Adottak), TErtek) :-
-    N > M,
+t_ertek(_, _, szt(N, M, _), TErtek) :-
+    N > M, !,
     szamok(0, M, TErtek).
 
-t_ertek(_Sorszam, _Oszlopszam, szt(N, M, _Adottak), TErtek) :-
-    N =:= M,
+t_ertek(_, _, szt(_N, M, _), TErtek) :-
     szamok(1, M, TErtek).
 
 % pred t_sor(sorszam::in, feladvany_leiro::in, t_sor::out).
@@ -75,177 +68,91 @@ t_matrix([Sorszam|Sorszamok], szt(N, M, Adottak), [TSor|Maradek]) :-
 kezdotabla(szt(N, M, Adottak), Mx) :-
     t_matrix(szt(N, M, Adottak), Mx).
 
-% pred sor(sorszam::in, t_matrix::in, t_sor::out).
-sor(Sorszam, Mx, TSor) :-
-    nth1(Sorszam, Mx, TSor).
+darab(_, [], 0) :- !.
+darab(E, [E|T], Db) :-
+    darab(E, T, Db1),
+    Db is Db1 + 1, !.
+darab(E, [H|T], Db) :-
+    E \= H,
+    darab(E, T, Db), !.
 
-% pred oszlop(oszlopszam::in, t_matrix::in, t_sor::out).
-oszlop(Oszlopszam, Mx, TOszlop) :-
-    maplist(nth1(Oszlopszam), Mx, TOszlop).
+van_egyelemu(Mx, SorIndex, OszlopIndex, E) :-
+    nth1(SorIndex, Mx, Sor),
+    nth1(OszlopIndex, Sor, [E]),
+    !.
 
-% pred adott(t_sor::in, ertek::out).
-adott([E], E) :- !.
+szukites(0, ElvartZ, Sor, Oszlop, MxBe, MxKi) :-
+    szukites_nullas(ElvartZ, Sor, Oszlop, MxBe, MxKi), !.
 
-t_sor_szukites(E, TSor, SzTSor) :-
-    maplist(t_ertek_szukites(E), TSor, SzTSor).
-
-% t_ertek_szukites(_, E, E) :- 
-%     integer(E), !.
-% 
-% t_ertek_szukites(_, [E], E) :- !.
-% 
-% t_ertek_szukites(E, TErtek, SzTErtek) :-
-%     select(E, TErtek, SzTErtek).
-% 
-% t_matrix_szukites(E, Mx, SzMx) :-
-%     maplist(t_sor_szukites(E), Mx, SzMx).
-
-elhagy(_, E, E) :-
-    integer(E), !.
-
-elhagy(E, [E], E) :-
-    integer(E), !.
-
-elhagy(E, TErtek, SzTErtek) :-
-    select(E, TErtek, SzTErtek).
-
-ertek(Sorszam, Oszlopszam, Mx, E) :- 
-    nth1(Sorszam, Mx, Sor), 
-    nth1(Oszlopszam, Sor, E).
-
-szukitett_ertek(Sorszam, Oszlopszam, MxBe, E, MxKi) :-
-    nth1(Sorszam, MxBe, RegiSor, MaradekSorok),
-    nth1(Oszlopszam, RegiSor, _RegiE, MaradekEk),
-    nth1(Oszlopszam, UjSor, E, MaradekEk),
-    nth1(Sorszam, MxKi, UjSor, MaradekSorok).
-
-darab(_, [], 0).
-darab(E, [E|T], Darab) :-
-    darab(E, T, Darab1),
-    Darab is Darab1 + 1.
-darab(E, [_|T], Darab) :-
-    darab(E, T, Darab).
-
-szukites(E, Sorszam, Oszlopszam, _N, _M, MxBe, []) :-
+szukites(E, _ElvartZ, Sor, Oszlop, MxBe, MxKi) :-
     E > 0,
-    sor(Sorszam, MxBe, TSor),
-    sorbol_elhagy(E, Oszlopszam, TSor, SzTSor), 
-    member([], SzTSor), !.
-szukites(E, Sorszam, Oszlopszam, _N, _M, MxBe, []) :-
-    E > 0,
-    sor(Sorszam, MxBe, TSor),
-    sorbol_elhagy(E, Oszlopszam, TSor, SzTSor), 
-    szukitett_sor(Sorszam, MxBe, SzTSor, MxSorUtan),
-    oszlop(Oszlopszam, MxSorUtan, TOszlop),
-    oszlopbol_elhagy(E, Sorszam, TOszlop, SzTOszlop),
-    member([], SzTOszlop), !.
-szukites(E, Sorszam, Oszlopszam, _N, _M, MxBe, MxKi) :-
-    E > 0,
-    sor(Sorszam, MxBe, TSor),
-    sorbol_elhagy(E, Oszlopszam, TSor, SzTSor), 
-    szukitett_sor(Sorszam, MxBe, SzTSor, MxSorUtan),
-    oszlop(Oszlopszam, MxSorUtan, TOszlop),
-    oszlopbol_elhagy(E, Sorszam, TOszlop, SzTOszlop),
-    szukitett_oszlop(Oszlopszam, MxSorUtan, SzTOszlop, MxOszlopUtan), 
-    szukitett_ertek(Sorszam, Oszlopszam, MxOszlopUtan, E, MxKi).
+    szukites_pozitiv(E, Sor, Oszlop, MxBe, MxKi), !.   
 
-szukites(E, Sorszam, Oszlopszam, N, M, MxBe, []) :-
-    E = 0,
-    sor(Sorszam, MxBe, TSor),
-    nullak_kibontva(TSor, SzTSor),
-    szukitett_sor(Sorszam, MxBe, SzTSor, MxOszlopUtan),
-    oszlop(Oszlopszam, MxOszlopUtan, TOszlop),
-    nullak_kibontva(TOszlop, SzTOszlop),
-    szukitett_oszlop(Oszlopszam, MxOszlopUtan, SzTOszlop, MxNullakKibontva),
-    ElvartZ is N - M,
-    sor(Sorszam, MxNullakKibontva, TSorNullakKibontva),
-    darab(0, TSorNullakKibontva, SorZ),
-    SorZ > ElvartZ, !.
+osszes_csere(_E, _UjE, [], []).
+osszes_csere(E, UjE, [E|T], [UjE|M]) :-
+    osszes_csere(E, UjE, T, M), !.
+osszes_csere(E, UjE, [H|T], [H|R]) :-
+    H \= E,
+    osszes_csere(E, UjE, T, R), !.
 
-szukites(E, Sorszam, Oszlopszam, N, M, MxBe, []) :-
-    E = 0,
-    sor(Sorszam, MxBe, TSor),
-    nullak_kibontva(TSor, SzTSor),
-    szukitett_sor(Sorszam, MxBe, SzTSor, MxOszlopUtan),
-    oszlop(Oszlopszam, MxOszlopUtan, TOszlop),
-    nullak_kibontva(TOszlop, SzTOszlop),
-    szukitett_oszlop(Oszlopszam, MxOszlopUtan, SzTOszlop, MxNullakKibontva),
-    ElvartZ is N - M,
-    sor(Sorszam, MxNullakKibontva, TSorNullakKibontva),
-    darab(0, TSorNullakKibontva, SorZ),
-    SorZ = ElvartZ,
-    sorbol_elhagy(E, Oszlopszam, TSorNullakKibontva, TSorNullakElhagyva),
-    szukitett_sor(Sorszam, MxNullakKibontva, TSorNullakElhagyva, MxSorbolNullakElhagyva),
-    oszlop(Oszlopszam, MxSorbolNullakElhagyva, TOszlopNullakKibontva),
-    darab(0, TOszlopNullakKibontva, OszlopZ),
-    OszlopZ > ElvartZ, !.
+elhagy(_, E, E) :- number(E), !.
+elhagy(_, [], []) :- !.
+elhagy(E, [E], []) :- !.
+elhagy(E, [E|T], M) :-
+    elhagy(E, T, M), !.
+elhagy(E, [H|T], [H|M]) :-
+    E \= H,
+    elhagy(E, T, M), !.
 
-szukites(E, Sorszam, Oszlopszam, N, M, MxBe, MxKi) :-
-    E = 0,
-    sor(Sorszam, MxBe, TSor),
-    nullak_kibontva(TSor, SzTSor),
-    szukitett_sor(Sorszam, MxBe, SzTSor, MxOszlopUtan),
-    oszlop(Oszlopszam, MxOszlopUtan, TOszlop),
-    nullak_kibontva(TOszlop, SzTOszlop),
-    szukitett_oszlop(Oszlopszam, MxOszlopUtan, SzTOszlop, MxNullakKibontva),
-    ElvartZ is N - M,
-    sor(Sorszam, MxNullakKibontva, TSorNullakKibontva),
-    darab(0, TSorNullakKibontva, SorZ),
-    SorZ = ElvartZ,
-    sorbol_elhagy(E, Oszlopszam, TSorNullakKibontva, TSorNullakElhagyva),
-    szukitett_sor(Sorszam, MxNullakKibontva, TSorNullakElhagyva, MxSorbolNullakElhagyva),
-    oszlop(Oszlopszam, MxSorbolNullakElhagyva, TOszlopNullakKibontva),
-    darab(0, TOszlopNullakKibontva, OszlopZ),
-    OszlopZ = ElvartZ,
-    oszlopbol_elhagy(E, Oszlopszam, TOszlopNullakKibontva, TOszlopNullakElhagyva),
-    szukitett_oszlop(Oszlopszam, MxSorbolNullakElhagyva, TOszlopNullakElhagyva, MxKi).
+cserel_sor(Matrix, 1, Sor, [Sor|T]) :-  % ha az első sort cseréljük
+    Matrix = [_|T].
+cserel_sor([H|T], Index, Sor, [H|R]) :-
+    Index > 1,
+    NewIndex is Index - 1,
+    cserel_sor(T, NewIndex, Sor, R).
 
-sorbol_elhagy(_, _, [], []).
-sorbol_elhagy(E, 1, [H|T1], [H|T2]) :-  
-    sorbol_elhagy(E, 0, T1, T2), !.
-sorbol_elhagy(E, N, [H1|T1], [H2|T2]) :-
-    select(E, H1, H2), !,
-    N1 is N - 1,
-    sorbol_elhagy(E, N1, T1, T2).
-sorbol_elhagy(E, N, [H|T1], [H|T2]) :-
-    N1 is N - 1,
-    sorbol_elhagy(E, N1, T1, T2).
+cserel_oszlop([], _, [], []).  % ha nincs több sor, kész
+cserel_oszlop([Sor|T], Index, [Elem|VegsoOszlopT], [UjSor|UjMatrixT]) :-
+    cserel_lista_elem(Sor, Index, Elem, UjSor),
+    cserel_oszlop(T, Index, VegsoOszlopT, UjMatrixT).
 
-oszlopbol_elhagy(E, N, TOszlopBe, TOszlopKi) :-
-    sorbol_elhagy(E, N, TOszlopBe, TOszlopKi).
+cserel_lista_elem([_|T], 1, Elem, [Elem|T]).
+cserel_lista_elem([H|T], Index, Elem, [H|R]) :-
+    Index > 1,
+    NewIndex is Index - 1,
+    cserel_lista_elem(T, NewIndex, Elem, R).
 
-nullak_kibontva([], []).
-nullak_kibontva([H|T1], [0|T2]) :-
-    [0] = H,
-    nullak_kibontva(T1, T2), !.
-nullak_kibontva([H|T1], [H|T2]) :-
-    nullak_kibontva(T1, T2).
+szukites_nullas(ElvartZ, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxKi) :-
+    osszes_csere([0], 0, Sor, CsereltSor),
+    darab(0, CsereltSor, SorZ),
+    ( 
+        SorZ > ElvartZ -> MxKi = [] 
+    ;
+        SorZ =:= ElvartZ -> 
+        maplist(elhagy(0), CsereltSor, VegsoSor),
 
-szukitett_sor(Sorszam, MxBe, SzTSor, MxKi) :-
-    nth1(Sorszam, MxBe, _, Maradek),
-    nth1(Sorszam, MxKi, SzTSor, Maradek).
+        osszes_csere([0], 0, Oszlop, CsereltOszlop),
+        darab(0, CsereltOszlop, OszlopZ),
+        ( 
+            OszlopZ > ElvartZ -> MxKi = [] 
+        ;
+            OszlopZ =:= ElvartZ -> 
+            maplist(elhagy(0), CsereltOszlop, VegsoOszlop),
+            cserel_sor(MxBe, SorIx, VegsoSor, MxSorCserelt),
+            cserel_oszlop(MxSorCserelt, OszlopIx, VegsoOszlop, MxKi)
+        )
+    ).
 
-szukitett_oszlop(Oszlopszam, MxBe, SzTOszlop, MxKi) :-
-    transpose(MxBe, MxBeT),
-    nth1(Oszlopszam, MxBeT, _, Maradek),
-    nth1(Oszlopszam, MxKiT, SzTOszlop, Maradek),
-    transpose(MxKiT, MxKi).
+ismert_szukites(_, [], []) :- !.
 
-ismert_szukites(szt(_N, _M, _), [], []) :- !.
+% ismert_szukites(_, Mx, _) :-
+%     \+ van_egyelemu(Mx, _SI, _OI, _E),
+%     !, 
+%     fail.
 
-ismert_szukites(szt(_N,_M,_), MxBe, _) :-
-    \+ (member(TSor, MxBe), member(TErtek, TSor), adott(TErtek,_)),
-    !, fail.  % nincs ismert elem, fail
+ismert_szukites(FL, MxBe, MxKi) :-
+    van_egyelemu(MxBe, Sor, Oszlop, E), !,
+    szukites(E, Sor, Oszlop, MxBe, MxSzukitett),
+    ismert_szukites(FL, MxSzukitett, MxKi).
 
-ismert_szukites(szt(_N,_M,_), MxBe, MxBe) :-
-    \+ (member(TSor, MxBe), member(TErtek, TSor), adott(TErtek,_)), !.
-
-% :- pred ismert_szukites(feladvany_leiro::in, t_matrix::in, t_matrix::out).
-ismert_szukites(szt(N, M, _), MxBe, MxKi) :-
-    member(TSor, MxBe),
-    member(TErtek, TSor),
-    adott(TErtek, Ertek),
-    nth1(Sorszam, MxBe, TSor),
-    nth1(Oszlopszam, TSor, TErtek),
-    szukites(Ertek, Sorszam, Oszlopszam, N, M, MxBe, MxSzukitett),
-    ismert_szukites(szt(N, M, _), MxSzukitett, MxKi), !.
+ismert_szukites(_, Mx, Mx).  
