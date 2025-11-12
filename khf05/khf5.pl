@@ -76,17 +76,11 @@ darab(E, [H|T], Db) :-
     E \= H,
     darab(E, T, Db), !.
 
-van_egyelemu(Mx, SorIndex, OszlopIndex, E) :-
+van_egyelemu(Mx, SorIndex, OszlopIndex, Sor, Oszlop, E) :-
     nth1(SorIndex, Mx, Sor),
     nth1(OszlopIndex, Sor, [E]),
+    maplist(nth1(OszlopIndex), Mx, Oszlop),
     !.
-
-szukites(0, ElvartZ, Sor, Oszlop, MxBe, MxKi) :-
-    szukites_nullas(ElvartZ, Sor, Oszlop, MxBe, MxKi), !.
-
-szukites(E, _ElvartZ, Sor, Oszlop, MxBe, MxKi) :-
-    E > 0,
-    szukites_pozitiv(E, Sor, Oszlop, MxBe, MxKi), !.   
 
 osszes_csere(_E, _UjE, [], []).
 osszes_csere(E, UjE, [E|T], [UjE|M]) :-
@@ -103,6 +97,14 @@ elhagy(E, [E|T], M) :-
 elhagy(E, [H|T], [H|M]) :-
     E \= H,
     elhagy(E, T, M), !.
+
+elhagy_kiveve(_, _, [], []) :- !.
+elhagy_kiveve(E, 1, [H1|T1], [H1|T2]) :- 
+    elhagy_kiveve(E, 0, T1, T2), !.
+elhagy_kiveve(E, Ix, [H1|T1], [H2|T2]) :-
+    Ix1 is Ix - 1,
+    elhagy(E, H1, H2),
+    elhagy_kiveve(E, Ix1, T1, T2).
 
 cserel_sor(Matrix, 1, Sor, [Sor|T]) :-  % ha az első sort cseréljük
     Matrix = [_|T].
@@ -121,6 +123,29 @@ cserel_lista_elem([H|T], Index, Elem, [H|R]) :-
     Index > 1,
     NewIndex is Index - 1,
     cserel_lista_elem(T, NewIndex, Elem, R).
+
+szukites(0, ElvartZ, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxKi) :-
+    szukites_nullas(ElvartZ, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxKi),
+    !.
+szukites(E, _ElvartZ, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxKi) :-
+    E > 0,
+    szukites_pozitiv(E, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxKi), 
+    !.   
+
+szukites_pozitiv(E, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxKi) :-
+    elhagy_kiveve(E, OszlopIx, Sor, ElhagyottSor),
+    ( 
+        member([], ElhagyottSor) -> MxKi = [] 
+    ;
+        elhagy_kiveve(E, SorIx, Oszlop, ElhagyottOszlop),
+        ( 
+            member([], ElhagyottOszlop) -> MxKi = [] 
+        ;
+            cserel_lista_elem(ElhagyottOszlop, SorIx, E, CsereltOszlop),
+            cserel_sor(MxBe, SorIx, ElhagyottSor, MxSorCserelt),
+            cserel_oszlop(MxSorCserelt, OszlopIx, CsereltOszlop, MxKi)
+        )
+    ).
 
 szukites_nullas(ElvartZ, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxKi) :-
     osszes_csere([0], 0, Sor, CsereltSor),
@@ -145,14 +170,10 @@ szukites_nullas(ElvartZ, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxKi) :-
 
 ismert_szukites(_, [], []) :- !.
 
-% ismert_szukites(_, Mx, _) :-
-%     \+ van_egyelemu(Mx, _SI, _OI, _E),
-%     !, 
-%     fail.
-
-ismert_szukites(FL, MxBe, MxKi) :-
-    van_egyelemu(MxBe, Sor, Oszlop, E), !,
-    szukites(E, Sor, Oszlop, MxBe, MxSzukitett),
-    ismert_szukites(FL, MxSzukitett, MxKi).
+ismert_szukites(szt(N,M,_), MxBe, MxKi) :-
+    van_egyelemu(MxBe, SorIx, OszlopIx, Sor, Oszlop, E), 
+    ElvartZ is N - M,
+    szukites(E, ElvartZ, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxSzukitett),
+    ismert_szukites(szt(N,M,_), MxSzukitett, MxKi).
 
 ismert_szukites(_, Mx, Mx).  
