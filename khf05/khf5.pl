@@ -77,10 +77,20 @@ darab(E, [H|T], Db) :-
     darab(E, T, Db), !.
 
 van_egyelemu(Mx, SorIndex, OszlopIndex, Sor, Oszlop, E) :-
-    nth1(SorIndex, Mx, Sor),
-    nth1(OszlopIndex, Sor, [E]),
-    maplist(nth1(OszlopIndex), Mx, Oszlop),
-    !.
+    findall(pos(R,C,S,O,V),
+        ( nth1(R, Mx, S),
+          nth1(C, S, [V]),
+          maplist(nth1(C), Mx, O)
+        ),
+        List),
+    List \= [],
+    List = [pos(SorIndex, OszlopIndex, Sor, Oszlop, E) | _].
+
+% van_egyelemu(Mx, SorIndex, OszlopIndex, Sor, Oszlop, E) :-
+%     nth1(SorIndex, Mx, Sor),
+%     nth1(OszlopIndex, Sor, [E]),
+%     maplist(nth1(OszlopIndex), Mx, Oszlop),
+%     !.
 
 osszes_csere(_E, _UjE, [], []).
 osszes_csere(E, UjE, [E|T], [UjE|M]) :-
@@ -171,9 +181,16 @@ szukites_nullas(ElvartZ, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxKi) :-
 ismert_szukites(_, [], []) :- !.
 
 ismert_szukites(szt(N,M,_), MxBe, MxKi) :-
-    van_egyelemu(MxBe, SorIx, OszlopIx, Sor, Oszlop, E), 
+    van_egyelemu(MxBe, SorIx, OszlopIx, Sor, Oszlop, E),  
+    !,  
     ElvartZ is N - M,
     szukites(E, ElvartZ, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxSzukitett),
     ismert_szukites(szt(N,M,_), MxSzukitett, MxKi).
+
+% ismert_szukites(szt(N,M,_), MxBe, MxKi) :-
+%     van_egyelemu(MxBe, SorIx, OszlopIx, Sor, Oszlop, E), 
+%     ElvartZ is N - M,
+%     szukites(E, ElvartZ, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxSzukitett),
+%     ismert_szukites(szt(N,M,_), MxSzukitett, MxKi).
 
 ismert_szukites(_, Mx, Mx).  
