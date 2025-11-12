@@ -161,22 +161,47 @@ szukites_nullas(ElvartZ, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxKi) :-
     osszes_csere([0], 0, Sor, CsereltSor),
     darab(0, CsereltSor, SorZ),
     ( 
-        SorZ > ElvartZ -> MxKi = [] 
+        SorZ > ElvartZ -> MxKi = []  
     ;
-        SorZ =:= ElvartZ -> 
-        maplist(elhagy(0), CsereltSor, VegsoSor),
+        SorZ =:= ElvartZ -> maplist(elhagy(0), CsereltSor, VegsoSor)  
+    ;
+        SorZ < ElvartZ -> VegsoSor = CsereltSor  
+    ),
 
-        osszes_csere([0], 0, Oszlop, CsereltOszlop),
-        darab(0, CsereltOszlop, OszlopZ),
-        ( 
-            OszlopZ > ElvartZ -> MxKi = [] 
-        ;
-            OszlopZ =:= ElvartZ -> 
-            maplist(elhagy(0), CsereltOszlop, VegsoOszlop),
-            cserel_sor(MxBe, SorIx, VegsoSor, MxSorCserelt),
-            cserel_oszlop(MxSorCserelt, OszlopIx, VegsoOszlop, MxKi)
-        )
-    ).
+    osszes_csere([0], 0, Oszlop, CsereltOszlop),
+    darab(0, CsereltOszlop, OszlopZ),
+    (
+        OszlopZ > ElvartZ -> MxKi = []  
+    ;
+        OszlopZ =:= ElvartZ -> maplist(elhagy(0), CsereltOszlop, VegsoOszlop)
+    ;
+        OszlopZ < ElvartZ -> VegsoOszlop = CsereltOszlop
+    ),
+
+    cserel_sor(MxBe, SorIx, VegsoSor, MxSorCserelt),
+    cserel_oszlop(MxSorCserelt, OszlopIx, VegsoOszlop, MxKi).
+
+
+% szukites_nullas(ElvartZ, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxKi) :-
+%     osszes_csere([0], 0, Sor, CsereltSor),
+%     darab(0, CsereltSor, SorZ),
+%     ( 
+%         SorZ > ElvartZ -> MxKi = [] 
+%     ;
+%         SorZ =:= ElvartZ -> 
+%         maplist(elhagy(0), CsereltSor, VegsoSor),
+% 
+%         osszes_csere([0], 0, Oszlop, CsereltOszlop),
+%         darab(0, CsereltOszlop, OszlopZ),
+%         ( 
+%             OszlopZ > ElvartZ -> MxKi = [] 
+%         ;
+%             OszlopZ =:= ElvartZ -> 
+%             maplist(elhagy(0), CsereltOszlop, VegsoOszlop),
+%             cserel_sor(MxBe, SorIx, VegsoSor, MxSorCserelt),
+%             cserel_oszlop(MxSorCserelt, OszlopIx, VegsoOszlop, MxKi)
+%         )
+%     ).
 
 ismert_szukites(_, [], []) :- !.
 
