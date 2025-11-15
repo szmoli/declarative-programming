@@ -99,16 +99,25 @@ vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik, Darab) :-
     sor(Ix, Mx, Sor),
     felvehetik(Sor, E, Felvehetik),
     length(Felvehetik, Darab),
-    Darab > 0,
     csak_listak(Felvehetik, CsakListak),
-    CsakListak \= [],
     (
-        E = 0 -> Darab =< Z
+        E = 0 -> 
+        ( 
+            Darab = Z,
+            CsakListak \= [] -> Sz = sor(Ix, E)
+        ; 
+            Darab < Z -> Sz = nem
+        )
     ;
-        E > 0 -> Darab =< 1
+        E > 0 -> 
+        ( 
+            Darab = 1,
+            CsakListak \= [] -> Sz = sor(Ix, E)
+        ; 
+            Darab < 1 -> Sz = nem
+        )
     ),
     !,   
-    Sz = sor(Ix, E),
     Vonal = Sor.
 
 vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik, Darab) :-
@@ -116,16 +125,25 @@ vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik, Darab) :-
     oszlop(Ix, Mx, Oszlop),
     felvehetik(Oszlop, E, Felvehetik),
     length(Felvehetik, Darab),
-    Darab > 0,
     csak_listak(Felvehetik, CsakListak),
-    CsakListak \= [],
     (
-        E = 0 -> Darab =< Z
+        E = 0 -> 
+        ( 
+            Darab = Z,
+            CsakListak \= [] -> Sz = oszl(Ix, E)
+        ; 
+            Darab < Z -> Sz = nem
+        )
     ;
-        E > 0 -> Darab =< 1
+        E > 0 -> 
+        ( 
+            Darab = 1,
+            CsakListak \= [] -> Sz = oszl(Ix, E)
+        ; 
+            Darab < 1 -> Sz = nem
+        )
     ),
     !,   
-    Sz = oszl(Ix, E),
     Vonal = Oszlop.
 
 szukit(SzBe, Vonal, Felvehetik, Darab, Z, MxBe, MxKi, SzKi) :-
