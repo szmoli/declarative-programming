@@ -106,7 +106,7 @@ vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik, Darab) :-
             Darab = Z,
             CsakListak \= [] -> Sz = sor(Ix, E)
         ; 
-            Darab < Z -> Sz = nem
+            Darab < Z -> Sz = nem(Ix, E)
         )
     ;
         E > 0 -> 
@@ -114,7 +114,7 @@ vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik, Darab) :-
             Darab = 1,
             CsakListak \= [] -> Sz = sor(Ix, E)
         ; 
-            Darab < 1 -> Sz = nem
+            Darab < 1 -> Sz = nem(Ix, E)
         )
     ),
     !,   
@@ -132,7 +132,7 @@ vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik, Darab) :-
             Darab = Z,
             CsakListak \= [] -> Sz = oszl(Ix, E)
         ; 
-            Darab < Z -> Sz = nem
+            Darab < Z -> Sz = nem(Ix, E)
         )
     ;
         E > 0 -> 
@@ -140,34 +140,14 @@ vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik, Darab) :-
             Darab = 1,
             CsakListak \= [] -> Sz = oszl(Ix, E)
         ; 
-            Darab < 1 -> Sz = nem
+            Darab < 1 -> Sz = nem(Ix, E)
         )
     ),
     !,   
     Vonal = Oszlop.
 
-szukit(SzBe, Vonal, Felvehetik, Darab, Z, MxBe, MxKi, SzKi) :-
-    SzBe =.. [_Tipus, _Ix, E],
-    (
-        E = 0 -> szukit_nullas(SzBe, Vonal, Felvehetik, Darab, Z, MxBe, MxKi, SzKi)
-    ;
-        E > 0 -> szukit_pozitiv()
-    ).
+%szukit(SzBe, Vonal, Felvehetik, Darab, Z, MxBe, MxKi, SzKi) :-
 
-szukit_pozitiv().
-
-szukit_nullas(SzBe, Vonal, _Felvehetik, Darab, Z, MxBe, MxKi, SzKi) :-
-    (
-        Darab < Z ->
-            MxKi = [],
-            SzKi = nem
-    ;
-        Darab = Z -> 
-            writeln(hello),
-            nullat_felveheto_tartomanyok_csere(Vonal, CsereltVonal),
-            cserel_vonal(SzBe, MxBe, CsereltVonal, MxKi),
-            SzKi = SzBe
-    ).
 
 kizarasos_szukites(szt(N, M, _), MxBe, MxKi, Sz) :-
     Z is N - M,
