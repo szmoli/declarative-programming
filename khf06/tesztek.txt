@@ -37,3 +37,15 @@ N = 4, M = 2, Mx0 = [[[1,2],[0,1,2],[1,2],[1,2]],[[1,2],[0,1,2],[0,1,2],[0,1,2]]
 10.
 
 N = 4, M = 2, Mx0 = [[[0,1,2],[0,1,2],[0,1,2],[0,1,2]],[[1,2],[0,1,2],[0,1,2],[0,1,2]],[[0,1,2],[0,2],[1,2],[1,2]],[[0,1,2],[0,1,2],[0,1,2],[0,1,2]]], vonal_keres(N,M,Mx0,SorIx,OszlopIx,Tipus,E,Vonal).
+
+Pipeline:
+
+Mx0 = [[[0,1,2],[1,2],[0,2]],[[1,2],[0,1,2],[0,1,2]],[[0,1],[0,1,2],[0,1,2]]],
+
+Mx0 = [[[1,2],[1,2],0],[[1,2],[0,1,2],[1,2]],[0,[1,2],[1,2]]],
+
+Mx0 = [[[0,1,2],[1,2],[0,2]],[[1,2],[0,1,2],[0,1,2]],[[0,1],[1,2],[0,1,2]]],
+
+N = 3, M = 2, Z is N - M, between(0, M, E), between(1, N, Ix), sor(Ix, Mx0, Sor), felvehetik(Sor, E, SorFelvehetik), length(SorFelvehetik, SorFelvehetikDarab), SorFelvehetikDarab > 0, csak_listak(SorFelvehetik, SorCsakListak), SorCsakListak \= [], (E = 0 -> SorFelvehetikDarab =< Z ; E > 0 -> SorFelvehetikDarab =< 1).
+
+FL=szt(3,2,_),kizarasos_szukites(FL,Mx0,_,Sz).

@@ -47,53 +47,15 @@ sor(Ix, Mx, Sor) :-
 % Mátrix oszlopa.
 oszlop(Ix, Mx, Oszlop) :-
     maplist(nth1(Ix), Mx, Oszlop).
-
-% Megfelel-e a feladatban adott feltételeknek a vonal.
-vonal_helyes(Vonal, E, Z) :-
-    felvehetik(Vonal, E, Fel),
-    length(Fel, Cnt),
-    Cnt > 0,
-    lista_darab(Fel, ListDB),
-    ListDB > 0,
-    (   
-        E = 0 -> Cnt =< Z
-    ;   
-        E > 0 -> Cnt =< 1
-    ).
-
-sor_keres(N, Mx, E, Z, SorIx, Vonal) :-
-    between(1, N, SorIx),
-    sor(SorIx, Mx, Vonal),
-    vonal_helyes(Vonal, E, Z),
-    !.
-
-oszlop_keres(N, Mx, E, Z, OszlopIx, Vonal) :-
-    between(1, N, OszlopIx),
-    oszlop(OszlopIx, Mx, Vonal),
-    vonal_helyes(Vonal, E, Z),
-    !.
-
-% Első jó vonal.
-vonal_keres(N, M, Mx, SorIx, OszlopIx, Tipus, E, Vonal) :-
-    Z is N - M,
-    between(0, M, E),
-        (   sor_keres(N, Mx, E, Z, SorIx, Vonal)
-        ->  Tipus = sor,
-            OszlopIx = 0
-        ;   oszlop_keres(N, Mx, E, Z, OszlopIx, Vonal)
-        ->  Tipus = oszlop,
-            SorIx = 0
-        ),
-    !.
     
 % Feladatban megadott szűkítések
-szukites(0, ElvartZ, SorIx, OszlopIx, Vonal, Tipus, MxBe, MxKi, Sz) :-
-    szukites_nullas(ElvartZ, SorIx, OszlopIx, Vonal, Tipus, MxBe, MxKi, Sz),
-    !.
-szukites(E, _ElvartZ, SorIx, OszlopIx, Vonal, Tipus, MxBe, MxKi, Sz) :-
-    E > 0,
-    szukites_pozitiv(E, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxKi), 
-    !.   
+%szukites(0, ElvartZ, SorIx, OszlopIx, Vonal, Tipus, MxBe, MxKi, Sz) :-
+%    szukites_nullas(ElvartZ, SorIx, OszlopIx, Vonal, Tipus, MxBe, MxKi, Sz),
+%    !.
+%szukites(E, _ElvartZ, SorIx, OszlopIx, Vonal, Tipus, MxBe, MxKi, Sz) :-
+%    E > 0,
+%    szukites_pozitiv(E, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxKi), 
+%    !.   
 
 szukites_pozitiv(E, SorIx, OszlopIx, Sor, Oszlop, MxBe, MxKi) :-
     elhagy_kiveve(E, OszlopIx, Sor, ElhagyottSor),
@@ -163,7 +125,66 @@ cserel_lista_elem([H|T], Index, Elem, [H|R]) :-
 
 % :- pred kizarasos_szukites(feladvany_leiro::in, t_matrix::in, t_matrix::out, szukites::out).
 
-kizarasos_szukites(szt(N, M, _), MxBe, MxKi, Sz) :- 
+csak_listak([], []).
+csak_listak([H|T1], [H|T2]) :-
+    is_list(H),
+    !,
+    csak_listak(T1, T2).
+csak_listak([_|T], CsakListak) :-
+    csak_listak(T, CsakListak).
+
+vonal_keres(N, Z, Mx, E, Sz, Vonal) :-
+    between(1, N, Ix),
+    sor(Ix, Mx, Sor),
+    felvehetik(Sor, E, SorFelvehetik),
+    length(SorFelvehetik, Darab),
+    Darab > 0,
+    csak_listak(SorFelvehetik, CsakListak),
+    CsakListak \= [],
+    (
+        E = 0 -> Darab =< Z
+    ;
+        E > 0 -> Darab =< 1
+    ),
+    !,   
+    Sz = sor(Ix, E),
+    Vonal = Sor.
+
+vonal_keres(N, Z, Mx, E, Sz, Vonal) :-
+    between(1, N, Ix),
+    oszlop(Ix, Mx, Oszlop),
+    felvehetik(Oszlop, E, OszlopFelvehetik),
+    length(OszlopFelvehetik, Darab),
+    Darab > 0,
+    csak_listak(OszlopFelvehetik, CsakListak),
+    CsakListak \= [],
+    (
+        E = 0 -> Darab =< Z
+    ;
+        E > 0 -> Darab =< 1
+    ),
+    !,   
+    Sz = oszl(Ix, E),
+    Vonal = Oszlop.
+
+kizarasos_szukites(szt(N, M, _), Mx0, MxKi, Sz) :-
     Z is N - M,
-    vonal_keres(N, M, MxBe, SorIx, OszlopIx, Tipus, E, Vonal),
-    szukites(E, Z, SorIx, OszlopIx, Vonal, Tipus, MxBe, MxKi, Sz).
+    between(0, M, E),
+    vonal_keres(N, Z, Mx0, E, Sz, Vonal),
+    MxKi = Mx0.   
+        
+    %Z is N - M,
+    %between(0, M, E), 
+    %between(1, N, Ix), 
+    %sor(Ix, Mx0, Sor), 
+    %felvehetik(Sor, E, SorFelvehetik), 
+    %length(SorFelvehetik, SorFelvehetikDarab), 
+    %SorFelvehetikDarab > 0, 
+    %csak_listak(SorFelvehetik, SorCsakListak), 
+    %SorCsakListak \= [], 
+    %(
+    %    E = 0 -> SorFelvehetikDarab =< Z 
+    %; 
+    %    E > 0 -> SorFelvehetikDarab =< 1
+    %).
+   
