@@ -1,3 +1,6 @@
+% Készítette: Szmoleniczki Ákos
+% 2025-11-16
+
 :- use_module(library(lists)).
 
 % :- type feladvany_leiro ---> szt(meret,ciklus,list(adott_elem)).
@@ -35,24 +38,15 @@ felvehetik([_|T], E, Ix, Felvehetik) :-
     Ix1 is Ix + 1,
     felvehetik(T, E, Ix1, Felvehetik).
 
-% Egy lista hány eleme lista.
-lista_darab([], 0).
-lista_darab([H|T], Darab) :-
-    lista_darab(T, Darab1),
-    (   
-        is_list(H) -> Darab is Darab1 + 1
-    ;   
-        Darab = Darab1
-    ).
-
-% Mátrix sora.
+% Mátrix Ix-edik sora.
 sor(Ix, Mx, Sor) :-
     nth1(Ix, Mx, Sor).
 
-% Mátrix oszlopa.
+% Mátrix Ix-edik oszlopa.
 oszlop(Ix, Mx, Oszlop) :-
     maplist(nth1(Ix), Mx, Oszlop).
 
+% Egy vonalban lecseréli az összes 0-t felvehető tartományt [0]-ra.
 nullat_felveheto_tartomanyok_csere([], []).
 nullat_felveheto_tartomanyok_csere([H|T1], [[0]|T2]) :-
     is_list(H),
@@ -62,13 +56,7 @@ nullat_felveheto_tartomanyok_csere([H|T1], [[0]|T2]) :-
 nullat_felveheto_tartomanyok_csere([H|T1], [H|T2]) :-
     nullat_felveheto_tartomanyok_csere(T1, T2).
 
-cserel_vonal(sor(Ix, _E), MxBe, Vonal, MxKi) :-
-    cserel_sor(MxBe, Ix, Vonal, MxKi).
-
-cserel_vonal(oszl(Ix, _E), MxBe, Vonal, MxKi) :-
-    cserel_oszlop(MxBe, Ix, Vonal, MxKi).
-
-% MxKi egy mátrix ahol az adott Sor-t kicseréltük.
+% Egy mátrix Ix-edik sorát cseréli le.
 cserel_sor(MxBe, 1, Sor, [Sor|T]) :-  
     MxBe = [_|T].
 cserel_sor([H|T], Ix, Sor, [H|R]) :-
@@ -76,41 +64,41 @@ cserel_sor([H|T], Ix, Sor, [H|R]) :-
     Ix1 is Ix - 1,
     cserel_sor(T, Ix1, Sor, R).
 
-% MxKi egy mátrix ahol az adott Oszlopo-t kicseréltük.
-cserel_oszlop([], _, [], []).  % ha nincs több sor, kész
-cserel_oszlop([Sor|T], Index, [Elem|VegsoOszlopT], [UjSor|UjMatrixT]) :-
-    cserel_lista_elem(Sor, Index, Elem, UjSor),
-    cserel_oszlop(T, Index, VegsoOszlopT, UjMatrixT).
+% Egy mátrix Ix-edik oszlopát cseréli le.
+cserel_oszlop([], _, [], []).  
+cserel_oszlop([Sor|T], Ix, [Elem|VegsoOszlopT], [UjSor|UjMatrixT]) :-
+    cserel_lista_elem(Sor, Ix, Elem, UjSor),
+    cserel_oszlop(T, Ix, VegsoOszlopT, UjMatrixT).
 
-% Kimeneti lista egy olyan lista amiben az Index-el adott helyen kicseréltünk egy elemet.
+% Egy lista Ix-edik elemét cseréli Elem-re.
 cserel_lista_elem([_|T], 1, Elem, [Elem|T]).
 cserel_lista_elem([H|T], Ix, Elem, [H|R]) :-
     Ix > 1,
     Ix1 is Ix - 1,
     cserel_lista_elem(T, Ix1, Elem, R).
 
-% :- pred kizarasos_szukites(feladvany_leiro::in, t_matrix::in, t_matrix::out, szukites::out).
-
-csak_listak([], []).
-csak_listak([H|T1], [H|T2]) :-
+% E-t felvehető tartományok közül kiszűri azokat, amik valóban tartományok és nem egész számok.
+csak_tartomanyok([], []).
+csak_tartomanyok([H|T1], [H|T2]) :-
     H = felv(_Ix, TE),
     is_list(TE),
     !,
-    csak_listak(T1, T2).
-csak_listak([_|T], CsakListak) :-
-    csak_listak(T, CsakListak).
+    csak_tartomanyok(T1, T2).
+csak_tartomanyok([_|T], CsakTartomanyok) :-
+    csak_tartomanyok(T, CsakTartomanyok).
 
+% Megkeresi az első vonalat a mátrixban. Először a sorokat nézi növekvő sorrendben, ha nem talál jót közülük, akkor az oszlopokkal folytatja. Ha egyetlen megfelelő vonal sincs, akkor meghiúsul.
 vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik) :-
     between(1, N, Ix),
     sor(Ix, Mx, Sor),
     felvehetik(Sor, E, Felvehetik),
     length(Felvehetik, Darab),
-    csak_listak(Felvehetik, CsakListak),
+    csak_tartomanyok(Felvehetik, CsakTartomanyok),
     (
         E = 0 -> 
         ( 
             Darab = Z,
-            CsakListak \= [] -> Sz = sor(Ix, E)
+            CsakTartomanyok \= [] -> Sz = sor(Ix, E)
         ; 
             Darab < Z -> Sz = nem(Ix, E)
         )
@@ -118,7 +106,7 @@ vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik) :-
         E > 0 -> 
         ( 
             Darab = 1,
-            CsakListak \= [] -> Sz = sor(Ix, E)
+            CsakTartomanyok \= [] -> Sz = sor(Ix, E)
         ; 
             Darab < 1 -> Sz = nem(Ix, E)
         )
@@ -131,12 +119,12 @@ vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik) :-
     oszlop(Ix, Mx, Oszlop),
     felvehetik(Oszlop, E, Felvehetik),
     length(Felvehetik, Darab),
-    csak_listak(Felvehetik, CsakListak),
+    csak_tartomanyok(Felvehetik, CsakTartomanyok),
     (
         E = 0 -> 
         ( 
             Darab = Z,
-            CsakListak \= [] -> Sz = oszl(Ix, E)
+            CsakTartomanyok \= [] -> Sz = oszl(Ix, E)
         ; 
             Darab < Z -> Sz = nem(Ix, E)
         )
@@ -144,7 +132,7 @@ vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik) :-
         E > 0 -> 
         ( 
             Darab = 1,
-            CsakListak \= [] -> Sz = oszl(Ix, E)
+            CsakTartomanyok \= [] -> Sz = oszl(Ix, E)
         ; 
             Darab < 1 -> Sz = nem(Ix, E)
         )
@@ -152,8 +140,10 @@ vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik) :-
     !,   
     Vonal = Oszlop.
 
+% Szűkíti a mátrixot.
 szukit(_Felvehetik, nem(_Ix, _E), _Vonal, _MxBe, [], nem).
 
+% Mátrix szűkítésnek különböző esetei.
 szukit(_Felvehetik, sor(Ix, 0), Vonal, MxBe, MxKi, sor(Ix, 0)) :-
     szukit_nullas(Vonal, SzukitettVonal),
     cserel_sor(MxBe, Ix, SzukitettVonal, MxKi).
@@ -172,14 +162,17 @@ szukit(Felvehetik, oszl(Ix, E), Vonal, MxBe, MxKi, oszl(Ix, E)) :-
     szukit_pozitiv(Felvehetik, E, Vonal, SzukitettVonal),
     cserel_oszlop(MxBe, Ix, SzukitettVonal, MxKi).
 
+% Szűkítés E = 0 esetén. A Vonalban az összes nullát felvehető tartományt kicseréli [0]-ra.
 szukit_nullas(VonalBe, VonalKi) :-
     nullat_felveheto_tartomanyok_csere(VonalBe, VonalKi).
 
+% Szűkítés E > 0 esetén. A Vonalban [E]-re cseréli azt az egy tartományt ami felveheti E-t.
 szukit_pozitiv(Felvehetik, E, VonalBe, VonalKi) :-
     Felvehetik = [Felveheti],
     Felveheti = felv(Ix, _TErtek),
     cserel_lista_elem(VonalBe, Ix, [E], VonalKi).
 
+% :- pred kizarasos_szukites(feladvany_leiro::in, t_matrix::in, t_matrix::out, szukites::out).
 kizarasos_szukites(szt(N, M, _), MxBe, MxKi, Sz) :-
     Z is N - M,
     between(0, M, E),
