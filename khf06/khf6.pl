@@ -89,9 +89,10 @@ csak_tartomanyok([_|T], CsakTartomanyok) :-
     csak_tartomanyok(T, CsakTartomanyok).
 
 % Megkeresi az első vonalat a mátrixban. Először a sorokat nézi növekvő sorrendben, ha nem talál jót közülük, akkor az oszlopokkal folytatja. Ha egyetlen megfelelő vonal sincs, akkor meghiúsul.
-vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik) :-
+vonal_keres(N, M, Z, Mx, Sz, Vonal, Felvehetik) :-
     between(1, N, Ix),
     sor(Ix, Mx, Sor),
+    between(0, M, E),
     felvehetik(Sor, E, Felvehetik),
     length(Felvehetik, Darab),
     csak_tartomanyok(Felvehetik, CsakTartomanyok),
@@ -115,9 +116,10 @@ vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik) :-
     !,   
     Vonal = Sor.
 
-vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik) :-
+vonal_keres(N, M, Z, Mx, Sz, Vonal, Felvehetik) :-
     between(1, N, Ix),
     oszlop(Ix, Mx, Oszlop),
+    between(0, M, E),
     felvehetik(Oszlop, E, Felvehetik),
     length(Felvehetik, Darab),
     csak_tartomanyok(Felvehetik, CsakTartomanyok),
@@ -176,8 +178,7 @@ szukit_pozitiv(Felvehetik, E, VonalBe, VonalKi) :-
 % :- pred kizarasos_szukites(feladvany_leiro::in, t_matrix::in, t_matrix::out, szukites::out).
 kizarasos_szukites(szt(N, M, _), MxBe, MxKi, Sz) :-
     Z is N - M,
-    between(0, M, E),
-    vonal_keres(N, Z, MxBe, E, VonalSz, Vonal, Felvehetik),
+    vonal_keres(N, M, Z, MxBe, VonalSz, Vonal, Felvehetik),
     szukit(Felvehetik, VonalSz, Vonal, MxBe, MxKi, Sz),
     !.
         
