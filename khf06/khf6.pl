@@ -2,6 +2,7 @@
 % 2025-11-16
 
 :- use_module(library(lists)).
+%:- use_module(library(between)).
 
 % :- type feladvany_leiro ---> szt(meret,ciklus,list(adott_elem)).
 % :- type meret             == integer.
@@ -177,5 +178,6 @@ kizarasos_szukites(szt(N, M, _), MxBe, MxKi, Sz) :-
     Z is N - M,
     between(0, M, E),
     vonal_keres(N, Z, MxBe, E, VonalSz, Vonal, Felvehetik),
-    szukit(Felvehetik, VonalSz, Vonal, MxBe, MxKi, Sz).
+    szukit(Felvehetik, VonalSz, Vonal, MxBe, MxKi, Sz),
+    !.
         
