@@ -21,14 +21,19 @@ felveheti(Tartomany, E) :-
     is_list(Tartomany),
     member(E, Tartomany).
 
+felvehetik(Vonal, E, Felvehetik) :-
+    felvehetik(Vonal, E, 1, Felvehetik).
+
 % Egy vonal elemei, amik felvehetik E-t.
-felvehetik([], _, []).
-felvehetik([H|T1], E, [H|T2]) :-
+felvehetik([], _, _, []).
+felvehetik([H|T1], E, Ix, [felv(Ix, H)|T2]) :-
     felveheti(H, E),
     !,
-    felvehetik(T1, E, T2).
-felvehetik([_|T], E, Felvehetik) :-
-    felvehetik(T, E, Felvehetik).
+    Ix1 is Ix + 1,
+    felvehetik(T1, E, Ix1, T2).
+felvehetik([_|T], E, Ix, Felvehetik) :-
+    Ix1 is Ix + 1,
+    felvehetik(T, E, Ix1, Felvehetik).
 
 % Egy lista hány eleme lista.
 lista_darab([], 0).
@@ -88,13 +93,14 @@ cserel_lista_elem([H|T], Ix, Elem, [H|R]) :-
 
 csak_listak([], []).
 csak_listak([H|T1], [H|T2]) :-
-    is_list(H),
+    H = felv(_Ix, TE),
+    is_list(TE),
     !,
     csak_listak(T1, T2).
 csak_listak([_|T], CsakListak) :-
     csak_listak(T, CsakListak).
 
-vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik, Darab) :-
+vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik) :-
     between(1, N, Ix),
     sor(Ix, Mx, Sor),
     felvehetik(Sor, E, Felvehetik),
@@ -120,7 +126,7 @@ vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik, Darab) :-
     !,   
     Vonal = Sor.
 
-vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik, Darab) :-
+vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik) :-
     between(1, N, Ix),
     oszlop(Ix, Mx, Oszlop),
     felvehetik(Oszlop, E, Felvehetik),
@@ -146,30 +152,37 @@ vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik, Darab) :-
     !,   
     Vonal = Oszlop.
 
-szukit(nem(_Ix, _E), _Vonal, _MxBe, [], nem).
+szukit(_Felvehetik, nem(_Ix, _E), _Vonal, _MxBe, [], nem).
 
-szukit(sor(Ix, 0), Vonal, MxBe, MxKi, sor(Ix, 0)) :-
+szukit(_Felvehetik, sor(Ix, 0), Vonal, MxBe, MxKi, sor(Ix, 0)) :-
     szukit_nullas(Vonal, SzukitettVonal),
     cserel_sor(MxBe, Ix, SzukitettVonal, MxKi).
 
-szukit(sor(Ix, E), Vonal, MxBe, MxKi, sor(Ix, E)) :-
+szukit(Felvehetik, sor(Ix, E), Vonal, MxBe, MxKi, sor(Ix, E)) :-
     E > 0,
-    MxKi = MxBe.
+    szukit_pozitiv(Felvehetik, E, Vonal, SzukitettVonal),
+    cserel_sor(MxBe, Ix, SzukitettVonal, MxKi).
 
-szukit(oszl(Ix, 0), Vonal, MxBe, MxKi, oszl(Ix, 0)) :-
+szukit(_Felvehetik, oszl(Ix, 0), Vonal, MxBe, MxKi, oszl(Ix, 0)) :-
     szukit_nullas(Vonal, SzukitettVonal),
     cserel_oszlop(MxBe, Ix, SzukitettVonal, MxKi).
 
-szukit(oszl(Ix, E), Vonal, MxBe, MxKi, oszl(Ix, E)) :-
+szukit(Felvehetik, oszl(Ix, E), Vonal, MxBe, MxKi, oszl(Ix, E)) :-
     E > 0,
-    MxKi = MxBe.
+    szukit_pozitiv(Felvehetik, E, Vonal, SzukitettVonal),
+    cserel_oszlop(MxBe, Ix, SzukitettVonal, MxKi).
 
 szukit_nullas(VonalBe, VonalKi) :-
     nullat_felveheto_tartomanyok_csere(VonalBe, VonalKi).
 
+szukit_pozitiv(Felvehetik, E, VonalBe, VonalKi) :-
+    Felvehetik = [Felveheti],
+    Felveheti = felv(Ix, _TErtek),
+    cserel_lista_elem(VonalBe, Ix, [E], VonalKi).
+
 kizarasos_szukites(szt(N, M, _), MxBe, MxKi, Sz) :-
     Z is N - M,
     between(0, M, E),
-    vonal_keres(N, Z, MxBe, E, VonalSz, Vonal, _Felvehetik, _Darab),
-    szukit(VonalSz, Vonal, MxBe, MxKi, Sz).
+    vonal_keres(N, Z, MxBe, E, VonalSz, Vonal, Felvehetik),
+    szukit(Felvehetik, VonalSz, Vonal, MxBe, MxKi, Sz).
         
