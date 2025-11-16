@@ -146,12 +146,30 @@ vonal_keres(N, Z, Mx, E, Sz, Vonal, Felvehetik, Darab) :-
     !,   
     Vonal = Oszlop.
 
-%szukit(SzBe, Vonal, Felvehetik, Darab, Z, MxBe, MxKi, SzKi) :-
+szukit(nem(_Ix, _E), _Vonal, _MxBe, [], nem).
 
+szukit(sor(Ix, 0), Vonal, MxBe, MxKi, sor(Ix, 0)) :-
+    szukit_nullas(Vonal, SzukitettVonal),
+    cserel_sor(MxBe, Ix, SzukitettVonal, MxKi).
+
+szukit(sor(Ix, E), Vonal, MxBe, MxKi, sor(Ix, E)) :-
+    E > 0,
+    MxKi = MxBe.
+
+szukit(oszl(Ix, 0), Vonal, MxBe, MxKi, oszl(Ix, 0)) :-
+    szukit_nullas(Vonal, SzukitettVonal),
+    cserel_oszlop(MxBe, Ix, SzukitettVonal, MxKi).
+
+szukit(oszl(Ix, E), Vonal, MxBe, MxKi, oszl(Ix, E)) :-
+    E > 0,
+    MxKi = MxBe.
+
+szukit_nullas(VonalBe, VonalKi) :-
+    nullat_felveheto_tartomanyok_csere(VonalBe, VonalKi).
 
 kizarasos_szukites(szt(N, M, _), MxBe, MxKi, Sz) :-
     Z is N - M,
     between(0, M, E),
-    vonal_keres(N, Z, MxBe, E, SzVonal, Vonal, Felvehetik, Darab),
-    szukit(SzVonal, Vonal, Felvehetik, Darab, Z, MxBe, MxKi, Sz).
+    vonal_keres(N, Z, MxBe, E, VonalSz, Vonal, _Felvehetik, _Darab),
+    szukit(VonalSz, Vonal, MxBe, MxKi, Sz).
         
