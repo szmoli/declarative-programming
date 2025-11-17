@@ -2,7 +2,7 @@
 % 2025-11-16
 
 :- use_module(library(lists)).
-%:- use_module(library(between)).
+:- use_module(library(between)).
 
 % :- type feladvany_leiro ---> szt(meret,ciklus,list(adott_elem)).
 % :- type meret             == integer.
